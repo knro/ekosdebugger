@@ -48,6 +48,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="stopKStarsB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="maximumSize">
             <size>
              <width>32</width>
@@ -107,7 +110,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="copyKStarsDbgLogB">
+          <widget class="QPushButton" name="copyKStarsDebugLogB">
            <property name="maximumSize">
             <size>
              <width>32</width>
@@ -220,6 +223,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="stopIndiB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="maximumSize">
             <size>
              <width>32</width>
@@ -279,7 +285,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="copyIndiDbgLogB">
+          <widget class="QPushButton" name="copyIndiDebugLogB">
            <property name="maximumSize">
             <size>
              <width>32</width>

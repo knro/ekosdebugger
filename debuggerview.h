@@ -23,6 +23,8 @@ class DebuggerView : public QMainWindow
     private slots:
         void processKStarsOutput();
         void processKStarsError();
+        void copyKStarsDebugLog();
+        void copyKStarsAppLog();
 
 
     private:
