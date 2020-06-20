@@ -199,7 +199,7 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_6">
          <item>
-          <widget class="QPushButton" name="startIndiB">
+          <widget class="QPushButton" name="startINDIB">
            <property name="maximumSize">
             <size>
              <width>32</width>
@@ -222,7 +222,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="stopIndiB">
+          <widget class="QPushButton" name="stopINDIB">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -246,6 +246,12 @@
             </size>
            </property>
           </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="profileCombo"/>
+         </item>
+         <item>
+          <widget class="QComboBox" name="driverCombo"/>
          </item>
          <item>
           <spacer name="horizontalSpacer_4">
@@ -285,7 +291,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="copyIndiDebugLogB">
+          <widget class="QPushButton" name="copyINDIDebugLogB">
            <property name="maximumSize">
             <size>
              <width>32</width>
@@ -310,7 +316,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QTextBrowser" name="IndiDebugLog"/>
+        <widget class="QTextBrowser" name="INDIDebugLog"/>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -335,7 +341,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="copyIndiAppLogB">
+          <widget class="QPushButton" name="copyINDIAppLogB">
            <property name="maximumSize">
             <size>
              <width>32</width>
@@ -360,7 +366,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QTextBrowser" name="IndiAppLog"/>
+        <widget class="QTextBrowser" name="INDIAppLog"/>
        </item>
       </layout>
      </widget>

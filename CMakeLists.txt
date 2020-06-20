@@ -11,35 +11,17 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# QtCreator supports the following variables for Android, which are identical to qmake Android variables.
-# Check http://doc.qt.io/qt-5/deployment-android.html for more information.
-# They need to be set before the find_package(Qt5 ...) call.
+find_package(Qt5 COMPONENTS Widgets Sql REQUIRED)
 
-#if(ANDROID)
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-#    if (ANDROID_ABI STREQUAL "armeabi-v7a")
-#        set(ANDROID_EXTRA_LIBS
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libcrypto.so
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
-#    endif()
-#endif()
-
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-
-if(ANDROID)
-  add_library(ekosdebugger SHARED
+add_executable(ekosdebugger
     main.cpp
     debuggerview.cpp
-    debuggerview.h
     debuggerview.ui
-  )
-else()
-  add_executable(ekosdebugger
-    main.cpp
-    debuggerview.cpp
-    debuggerview.h
-    debuggerview.ui
-  )
-endif()
+    userdb.cpp
+    profileinfo.cpp
+)
 
-target_link_libraries(ekosdebugger PRIVATE Qt5::Widgets)
+target_link_libraries(ekosdebugger PRIVATE
+    Qt5::Widgets
+    Qt5::Sql
+    )
