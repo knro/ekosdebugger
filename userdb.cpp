@@ -57,6 +57,7 @@ void ProfileDB::GetAllProfiles(QList<std::shared_ptr<ProfileInfo>> &profiles)
         QSqlTableModel driver(nullptr, userdb);
         driver.setTable("driver");
         driver.setFilter("profile=" + QString::number(pi->id));
+        driver.select();
 
         for (int i = 0; i < driver.rowCount(); ++i)
         {

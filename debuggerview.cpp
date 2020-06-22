@@ -5,12 +5,19 @@
 
 #include "userdb.h"
 
+#include <QStandardItemModel>
+#include <QXmlSimpleReader>
+#include <QStandardPaths>
+#include <driverinfo.h>
+#define ERRMSG_SIZE    1024
+
 DebuggerView::DebuggerView(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::DebuggerView)
 {
     ui->setupUi(this);
     ui->statusbar->showMessage("Welcome to Ekos Debugger!");
+    m_MountModel = new QStandardItemModel(this);
 
     connect(ui->startKStarsB, &QPushButton::clicked, this, &DebuggerView::startKStars);
     connect(ui->stopKStarsB, &QPushButton::clicked, this, &DebuggerView::stopKStars);
@@ -20,13 +27,29 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(ui->stopINDIB, &QPushButton::clicked, this, &DebuggerView::stopINDI);
     connect(ui->copyINDIDebugLogB, &QPushButton::clicked, this, &DebuggerView::copyINDIDebugLog);
     connect(ui->copyINDIAppLogB, &QPushButton::clicked, this, &DebuggerView::copyINDIAppLog);
+    connect(ui->profileCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DebuggerView::loadDriverCombo);
+    connect(ui->driverCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DebuggerView::createINDIArgs);
 
+    readXMLDrivers();
     loadProfiles();
+
+
+
+
+    //    readXMLDrivers();
+
+    //    readINDIHosts();
+
+    //    m_CustomDrivers = new CustomDrivers(this, driversList);
+
+    //    updateCustomDrivers();
 }
 
 DebuggerView::~DebuggerView()
 {
     delete ui;
+    if(m_KStarsProcess != nullptr)
+        stopKStars();
 }
 
 void DebuggerView::startKStars()
@@ -38,11 +61,26 @@ void DebuggerView::startKStars()
     ui->stopKStarsB->setDisabled(false);
     ui->statusbar->showMessage("Started KStars.");
 
-
+    //reads output and error process logs and connects them to their corresponding proccesing functions.
     connect(m_KStarsProcess, &QProcess::readyReadStandardOutput, this, &DebuggerView::processKStarsOutput);
     connect(m_KStarsProcess, &QProcess::readyReadStandardError, this, &DebuggerView::processKStarsError);
-    m_KStarsProcess->start("gdb", args);
+    //catches if KStars process has exited or crashed.
+    connect(m_KStarsProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            [ = ](int exitCode, QProcess::ExitStatus exitStatus)
+    {
+        Q_UNUSED(exitCode);
+        if (ui->stopKStarsB->isEnabled())
+        {
+            ui->startKStarsB->setDisabled(false);
+            ui->stopKStarsB->setDisabled(true);
+            if(exitStatus == QProcess::CrashExit)
+                ui->statusbar->showMessage("KStars crashed.");
+            else
+                ui->statusbar->showMessage("KStars exited normally.");
+        }
+    });
 
+    m_KStarsProcess->start("gdb", args);
 }
 
 void DebuggerView::stopKStars()
@@ -86,12 +124,11 @@ void DebuggerView::startINDI()
     m_INDIProcess = new QProcess();
     QStringList args;
     args << "-batch" << "-ex" << "run" << "-ex" << "set follow-fork-mode child" << "-ex" << "run" << "-ex" << "bt" << "--args"
-         << "indiserver" << "-r" << "0" << "-v";
+         << "indiserver" << "-r" << "0" << "-v" << INDIArgs;
     //    gdb -batch -ex "set follow-fork-mode child" -ex "run" -ex "bt" --args indiserver -r 0 -v
     ui->startINDIB->setDisabled(true);
     ui->stopINDIB->setDisabled(false);
     ui->statusbar->showMessage("Started INDI.");
-
 
     connect(m_INDIProcess, &QProcess::readyReadStandardOutput, this, &DebuggerView::processINDIOutput);
     connect(m_INDIProcess, &QProcess::readyReadStandardError, this, &DebuggerView::processINDIError);
@@ -145,16 +182,203 @@ void DebuggerView::loadProfiles()
         qDebug() << pi->name;
         ui->profileCombo->addItem(pi->name);
     }
+}
 
+void DebuggerView::loadDriverCombo()
+{
+    currProfile = nullptr;
+
+    ui->driverCombo->clear();
+
+    // Get current profile
+    for (auto &pi : profiles)
+    {
+        if (ui->profileCombo->currentText() == pi->name)
+        {
+            currProfile = pi.get();
+            break;
+        }
+    }
+    setPi(currProfile);
+}
+
+void DebuggerView::createINDIArgs()
+{
+    if (ui->driverCombo->currentText() == nullptr)
+        return;
+
+    INDIArgs.clear();
+
+    for (auto &grp : driverslist->m_groups)
+    {
+        for(auto &dev : grp->m_devices)
+        {
+            if (ui->driverCombo->currentText() == dev[0])
+            {
+                INDIArgs.append(dev[1]);
+                break;
+            }
+        }
+    }
+    for(auto &driver : currProfile->drivers)
+    {
+        if (ui->driverCombo->currentText() == driver)
+            continue;
+        for (auto &grp : driverslist->m_groups)
+        {
+            for(auto &dev : grp->m_devices)
+            {
+                if (driver == dev[0])
+                {
+                    INDIArgs.append(dev[1]);
+                    break;
+                }
+            }
+        }
+
+    }
+}
+
+void DebuggerView::setPi(ProfileInfo * value)
+{
+    pi = value;
+
+    QMapIterator<QString, QString> i(pi->drivers);
+
+    while (i.hasNext())
+    {
+        i.next();
+
+        QString key   = i.key();
+        QString value = i.value();
+        ui->driverCombo->addItem(value);
+
+    }
 
 }
 
-//from manager.cpp
-//void DebuggerView::loadDrivers()
+//bool DebuggerView::readINDIHosts()
 //{
-//    foreach (DriverInfo * dv, DriverManager::Instance()->getDrivers())
+//    QString indiFile("indihosts.xml");
+//    //QFile localeFile;
+//    QFile file;
+//    char errmsg[1024];
+//    char c;
+//    LilXML *xmlParser = newLilXML();
+//    XMLEle *root      = nullptr;
+//    XMLAtt *ap        = nullptr;
+//    QString hName, hHost, hPort;
+
+//    lastGroup = nullptr;
+//    file.setFileName(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + indiFile);
+//    //    file.setFileName(KSPaths::locate(QStandardPaths::GenericDataLocation, indiFile));
+//    if (file.fileName().isEmpty() || !file.open(QIODevice::ReadOnly))
 //    {
-//        if (dv->getDriverSource() != HOST_SOURCE)
-//            driversList[dv->getLabel()] = dv;
+//        delLilXML(xmlParser);
+//        return false;
 //    }
+
+//    while (file.getChar(&c))
+//    {
+//        root = readXMLEle(xmlParser, c, errmsg);
+
+//        if (root)
+//        {
+//            // Get host name
+//            ap = findXMLAtt(root, "name");
+//            if (!ap)
+//            {
+//                delLilXML(xmlParser);
+//                return false;
+//            }
+
+//            hName = QString(valuXMLAtt(ap));
+
+//            // Get host name
+//            ap = findXMLAtt(root, "hostname");
+
+//            if (!ap)
+//            {
+//                delLilXML(xmlParser);
+//                return false;
+//            }
+
+//            hHost = QString(valuXMLAtt(ap));
+
+//            ap = findXMLAtt(root, "port");
+
+//            if (!ap)
+//            {
+//                delLilXML(xmlParser);
+//                return false;
+//            }
+
+//            hPort = QString(valuXMLAtt(ap));
+
+//            DriverInfo *dv = new DriverInfo(hName);
+//            dv->setHostParameters(hHost, hPort);
+//            dv->setDriverSource(HOST_SOURCE);
+
+//            connect(dv, SIGNAL(deviceStateChanged(DriverInfo*)), this, SLOT(processDeviceStatus(DriverInfo*)));
+
+//            driversList.append(dv);
+
+//            //            QTreeWidgetItem *item = new QTreeWidgetItem(ui->clientTreeWidget, lastGroup);
+//            //            lastGroup             = item;
+//            //            item->setIcon(HOST_STATUS_COLUMN, ui->disconnected);
+//            //            item->setText(HOST_NAME_COLUMN, hName);
+//            //            item->setText(HOST_PORT_COLUMN, hPort);
+
+//            delXMLEle(root);
+//        }
+//        else if (errmsg[0])
+//        {
+//            qDebug() << errmsg;
+//            delLilXML(xmlParser);
+//            return false;
+//        }
+//    }
+
+//    delLilXML(xmlParser);
+
+//    return true;
 //}
+
+bool DebuggerView::readXMLDrivers()
+{
+    // TODO fix it for MacOS
+    QDir indiDir("/usr/share/indi");
+    QString driverName;
+
+    indiDir.setNameFilters(QStringList() << "indi_*.xml" << "drivers.xml");
+    indiDir.setFilter(QDir::Files | QDir::NoSymLinks);
+    QFileInfoList list = indiDir.entryInfoList();
+
+    for (auto &fileInfo : list)
+    {
+        if (fileInfo.fileName().endsWith(QLatin1String("_sk.xml")))
+            continue;
+        readXMLDriverList(fileInfo.absoluteFilePath());
+    }
+
+    return true;
+}
+
+void DebuggerView::readXMLDriverList(const QString &driversFile)
+{
+    QFile file(driversFile);
+    if(!file.open(QFile::ReadOnly | QFile::Text))
+    {
+        qDebug() << "Cannot read file" << file.errorString();
+        return;
+    }
+
+
+    XmlDriversListReader xmlReader(driverslist);
+    //    xmlReader.read(&file);
+
+    if (!xmlReader.read(&file))
+        qDebug() << "Parse error in file " << xmlReader.errorString();
+    else
+        driverslist->print();
+}
