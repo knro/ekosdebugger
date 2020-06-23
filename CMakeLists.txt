@@ -28,3 +28,4 @@ target_link_libraries(ekosdebugger PRIVATE
     Qt5::Sql
     Qt5::Xml
     )
+

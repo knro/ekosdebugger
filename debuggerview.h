@@ -14,6 +14,8 @@
 #include "handler.h"
 #include <QXmlStreamReader>
 #include "xmldriverslistreader.h"
+#include <QFileDialog>
+#include <QDateTime>
 
 #include <memory>
 
@@ -77,6 +79,8 @@ class DebuggerView : public QMainWindow
         void copyINDIDebugLog();
         void copyINDIAppLog();
         void createINDIArgs();
+        void saveKStarsLogs();
+        void saveINDILogs();
 
 
     private:

@@ -29,6 +29,8 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(ui->copyINDIAppLogB, &QPushButton::clicked, this, &DebuggerView::copyINDIAppLog);
     connect(ui->profileCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DebuggerView::loadDriverCombo);
     connect(ui->driverCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DebuggerView::createINDIArgs);
+    connect(ui->saveKStarsLogsB, &QPushButton::clicked, this, &DebuggerView::saveKStarsLogs);
+    connect(ui->saveINDILogsB, &QPushButton::clicked, this, &DebuggerView::saveINDILogs);
 
     readXMLDrivers();
     loadProfiles();
@@ -257,6 +259,105 @@ void DebuggerView::setPi(ProfileInfo * value)
 
 }
 
+bool DebuggerView::readXMLDrivers()
+{
+    // TODO fix it for MacOS
+    QDir indiDir("/usr/share/indi");
+    QString driverName;
+
+    indiDir.setNameFilters(QStringList() << "indi_*.xml" << "drivers.xml");
+    indiDir.setFilter(QDir::Files | QDir::NoSymLinks);
+    QFileInfoList list = indiDir.entryInfoList();
+
+    for (auto &fileInfo : list)
+    {
+        if (fileInfo.fileName().endsWith(QLatin1String("_sk.xml")))
+            continue;
+        readXMLDriverList(fileInfo.absoluteFilePath());
+    }
+
+    return true;
+}
+
+void DebuggerView::readXMLDriverList(const QString &driversFile)
+{
+    QFile file(driversFile);
+    if(!file.open(QFile::ReadOnly | QFile::Text))
+    {
+        qDebug() << "Cannot read file" << file.errorString();
+        return;
+    }
+
+
+    XmlDriversListReader xmlReader(driverslist);
+    //    xmlReader.read(&file);
+
+    if (!xmlReader.read(&file))
+        qDebug() << "Parse error in file " << xmlReader.errorString();
+    else
+        driverslist->print();
+}
+
+void DebuggerView::saveKStarsLogs()
+{
+    QString homePath = QDir::homePath();
+    QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
+    QString filepath;
+    filepath = QFileDialog::getExistingDirectory(this, "Save KStars logs", homePath, QFileDialog::ShowDirsOnly);
+    qDebug() << filepath;
+
+    QString debugLog = ui->KStarsDebugLog->toPlainText();
+    QString appLog = ui->KStarsAppLog->toPlainText();
+
+    QString debuglogtxt = filepath + "/kstars_debug_log_" + timestamp + ".txt";
+    QFile debugfile( debuglogtxt );
+    if ( debugfile.open(QIODevice::ReadWrite) )
+    {
+        QTextStream stream( &debugfile );
+        stream << debugLog << endl;
+    }
+    debugfile.close();
+
+    QString applogtxt = filepath + "/kstars_app_log_" + timestamp + ".txt";
+    QFile appfile( applogtxt );
+    if ( appfile.open(QIODevice::ReadWrite) )
+    {
+        QTextStream stream( &appfile );
+        stream << appLog << endl;
+    }
+    appfile.close();
+}
+
+void DebuggerView::saveINDILogs()
+{
+    QString homePath = QDir::homePath();
+    QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
+    QString filepath;
+    filepath = QFileDialog::getExistingDirectory(this, "Save INDI logs", homePath, QFileDialog::ShowDirsOnly);
+    qDebug() << filepath;
+
+    QString debugLog = ui->INDIDebugLog->toPlainText();
+    QString appLog = ui->INDIAppLog->toPlainText();
+
+    QString debuglogtxt = filepath + "/indi_debug_log_" + timestamp + ".txt";
+    QFile debugfile( debuglogtxt );
+    if ( debugfile.open(QIODevice::ReadWrite) )
+    {
+        QTextStream stream( &debugfile );
+        stream << debugLog << endl;
+    }
+    debugfile.close();
+
+    QString applogtxt = filepath + "/indi_app_log_" + timestamp + ".txt";
+    QFile appfile( applogtxt );
+    if ( appfile.open(QIODevice::ReadWrite) )
+    {
+        QTextStream stream( &appfile );
+        stream << appLog << endl;
+    }
+    appfile.close();
+}
+
 //bool DebuggerView::readINDIHosts()
 //{
 //    QString indiFile("indihosts.xml");
@@ -343,42 +444,3 @@ void DebuggerView::setPi(ProfileInfo * value)
 
 //    return true;
 //}
-
-bool DebuggerView::readXMLDrivers()
-{
-    // TODO fix it for MacOS
-    QDir indiDir("/usr/share/indi");
-    QString driverName;
-
-    indiDir.setNameFilters(QStringList() << "indi_*.xml" << "drivers.xml");
-    indiDir.setFilter(QDir::Files | QDir::NoSymLinks);
-    QFileInfoList list = indiDir.entryInfoList();
-
-    for (auto &fileInfo : list)
-    {
-        if (fileInfo.fileName().endsWith(QLatin1String("_sk.xml")))
-            continue;
-        readXMLDriverList(fileInfo.absoluteFilePath());
-    }
-
-    return true;
-}
-
-void DebuggerView::readXMLDriverList(const QString &driversFile)
-{
-    QFile file(driversFile);
-    if(!file.open(QFile::ReadOnly | QFile::Text))
-    {
-        qDebug() << "Cannot read file" << file.errorString();
-        return;
-    }
-
-
-    XmlDriversListReader xmlReader(driverslist);
-    //    xmlReader.read(&file);
-
-    if (!xmlReader.read(&file))
-        qDebug() << "Parse error in file " << xmlReader.errorString();
-    else
-        driverslist->print();
-}

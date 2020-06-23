@@ -85,6 +85,13 @@
            </property>
           </spacer>
          </item>
+         <item>
+          <widget class="QPushButton" name="saveKStarsLogsB">
+           <property name="text">
+            <string>Save As...</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -265,6 +272,13 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="saveINDILogsB">
+           <property name="text">
+            <string>Save As...</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
