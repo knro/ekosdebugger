@@ -1,25 +1,22 @@
-#ifndef DEBUGGERVIEW_H
-#define DEBUGGERVIEW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QProcess>
 #include <QPointer>
 #include <QJsonObject>
 #include <QList>
-#include </usr/include/libindi/lilxml.h>
 #include <QTreeWidgetItem>
-#include "indicommon.h"
 #include <QDir>
 #include <QXmlInputSource>
-#include "handler.h"
 #include <QXmlStreamReader>
-#include "xmldriverslistreader.h"
 #include <QFileDialog>
 #include <QDateTime>
 
-#include <memory>
-
+#include "handler.h"
+#include "xmldriverslistreader.h"
 #include "profileinfo.h"
+
+#include <memory>
 
 class ProfileInfo;
 class QStandardItemModel;
@@ -63,8 +60,6 @@ class DebuggerView : public QMainWindow
         bool readXMLDrivers();
         void readXMLDriverList(const QString &driverName);
         QString findDriverByLabel(const QString &label);
-        bool buildDeviceGroup(XMLEle *root, char errmsg[]);
-        bool buildDriverElement(XMLEle *root, QTreeWidgetItem *DGroup, DeviceFamily groupType, char errmsg[]);
         bool checkDriverAvailability(const QString &driver);
         QStringList INDIArgs;
 
@@ -96,11 +91,7 @@ class DebuggerView : public QMainWindow
         void loadDriverCombo();
         void loadDrivers();
 
-        ServerMode connectionMode { SERVER_CLIENT };
-        QTreeWidgetItem *lastGroup { nullptr };
-        int currentPort;
         //DriverInfo::XMLSource xmlSource;
-        DriverSource driverSource;
         QStringList driversStringList;
         //        QPointer<CustomDrivers> m_CustomDrivers;
 
@@ -111,8 +102,7 @@ class DebuggerView : public QMainWindow
         void scanIP(const QString &ip);
         void clearAllRequests();
 
-        //        QList<OAL::Scope *> m_scopeList;
         QStandardItemModel *m_MountModel { nullptr };
 
 };
-#endif // DEBUGGERVIEW_H
+
