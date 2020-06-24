@@ -13,15 +13,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt5 COMPONENTS Widgets Sql Xml REQUIRED)
 
-add_executable(ekosdebugger
+set(SOURCES
     main.cpp
     debuggerview.cpp
     debuggerview.ui
     userdb.cpp
     profileinfo.cpp
     handler.cpp
-    xmldriverslistreader.cpp
-)
+    xmldriverslistreader.cpp)
+
+qt5_add_resources(SOURCES resources/resources.qrc)
+
+add_executable(ekosdebugger ${SOURCES})
 
 target_link_libraries(ekosdebugger PRIVATE
     Qt5::Widgets
