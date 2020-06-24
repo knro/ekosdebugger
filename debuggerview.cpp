@@ -20,6 +20,23 @@ DebuggerView::DebuggerView(QWidget *parent)
     ui->statusbar->showMessage("Welcome to Ekos Debugger!");
     m_MountModel = new QStandardItemModel(this);
 
+    QSettings settings;
+    bool restartINDI = settings.value("indi/restart", true).toBool();
+    ui->restartINDICB->setChecked(restartINDI);
+    connect(ui->restartINDICB, &QCheckBox::toggled, [](bool checked)
+    {
+        QSettings settings;
+        settings.setValue("indi/restart", checked);
+    });
+
+    bool restartKStars = settings.value("kstars/restart", true).toBool();
+    ui->restartKStarsCB->setChecked(restartKStars);
+    connect(ui->restartKStarsCB, &QCheckBox::toggled, [](bool checked)
+    {
+        QSettings settings;
+        settings.setValue("kstars/restart", checked);
+    });
+
     connect(ui->startKStarsB, &QPushButton::clicked, this, &DebuggerView::startKStars);
     connect(ui->stopKStarsB, &QPushButton::clicked, this, &DebuggerView::stopKStars);
     connect(ui->copyKStarsDebugLogB, &QPushButton::clicked, this, &DebuggerView::copyKStarsDebugLog);
@@ -35,17 +52,6 @@ DebuggerView::DebuggerView(QWidget *parent)
 
     readXMLDrivers();
     loadProfiles();
-
-
-
-
-    //    readXMLDrivers();
-
-    //    readINDIHosts();
-
-    //    m_CustomDrivers = new CustomDrivers(this, driversList);
-
-    //    updateCustomDrivers();
 }
 
 DebuggerView::~DebuggerView()
@@ -133,7 +139,7 @@ void DebuggerView::startINDI()
 {
     m_INDIProcess = new QProcess();
     QStringList args;
-    args << "-batch" << "-ex" << "run" << "-ex" << "set follow-fork-mode child" << "-ex" << "run" << "-ex" << "bt" << "--args"
+    args << "-batch" << "-ex" << "set follow-fork-mode child" << "-ex" << "bt" << "--args"
          << "indiserver" << "-r" << "0" << "-v" << INDIArgs;
     //    gdb -batch -ex "set follow-fork-mode child" -ex "run" -ex "bt" --args indiserver -r 0 -v
     ui->startINDIB->setDisabled(true);
@@ -327,16 +333,16 @@ void DebuggerView::readXMLDriverList(const QString &driversFile)
 
 void DebuggerView::saveKStarsLogs()
 {
-    //    QString homePath = settings.value("savepath/kstars", QDir::homePath()).toString();
+    QSettings settings;
+    QString homePath = settings.value("paths/kstars", QDir::homePath()).toString();
 
-    QString homePath = loadSettings("kstars");
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
     QString filepath;
     filepath = QFileDialog::getExistingDirectory(this, "Save KStars logs", homePath, QFileDialog::ShowDirsOnly);
     qDebug() << filepath;
     if(!filepath.isEmpty() && !filepath.isNull())
     {
-        saveSettings("kstars", filepath);
+        settings.setValue("paths/kstars", filepath);
         QString debugLog = ui->KStarsDebugLog->toPlainText();
         QString appLog = ui->KStarsAppLog->toPlainText();
 
@@ -369,16 +375,16 @@ void DebuggerView::saveKStarsLogs()
 
 void DebuggerView::saveINDILogs()
 {
-    //    QString homePath = settings.value("indi/savePath", QDir::homePath()).toString();
-    QString homePath = loadSettings("indi");
-    //    QString homePath = QDir::homePath();
+    QSettings settings;
+    QString homePath = settings.value("paths/indi", QDir::homePath()).toString();
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
     QString filepath;
     filepath = QFileDialog::getExistingDirectory(this, "Save INDI logs", homePath, QFileDialog::ShowDirsOnly);
     qDebug() << filepath;
     if(!filepath.isEmpty() && !filepath.isNull())
     {
-        saveSettings("indi", filepath);
+        settings.setValue("paths/indi", filepath);
+
         QString debugLog = ui->INDIDebugLog->toPlainText();
         QString appLog = ui->INDIAppLog->toPlainText();
 
@@ -407,33 +413,6 @@ void DebuggerView::saveINDILogs()
 
 
 }
-
-void DebuggerView::saveSettings(QString process, QString savePath)
-{
-    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/ekosdebugger/";
-    QSettings setting(docPath + "config.ini", QSettings::IniFormat);
-    setting.beginGroup("SavePaths");
-    setting.setValue(process, savePath);
-    setting.endGroup();
-
-    qDebug() << "Saved";
-}
-
-QString DebuggerView::loadSettings(QString process)
-{
-    QString homePath = QDir::homePath();
-    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/ekosdebugger/";
-    QSettings setting(docPath + "config.ini", QSettings::IniFormat);
-    setting.beginGroup("SavePaths");
-    QString savePath = setting.value(process).toString();
-    if(savePath == "")
-        savePath = homePath;
-    setting.endGroup();
-
-    qDebug() << "Loaded";
-    return savePath;
-}
-
 //bool DebuggerView::readINDIHosts()
 //{
 //    QString indiFile("indihosts.xml");

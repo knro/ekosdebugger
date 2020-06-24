@@ -89,16 +89,9 @@ class DebuggerView : public QMainWindow
         void loadProfiles();
         void loadDriverCombo();
         void loadDrivers();
-        void saveSettings(QString, QString);
-        QString loadSettings(QString);
 
-        //DriverInfo::XMLSource xmlSource;
         QStringList driversStringList;
-        //        QPointer<CustomDrivers> m_CustomDrivers;
-
-
         ProfileInfo *pi { nullptr };
-
         QString getTooltip(DriverInfo *dv);
         void scanIP(const QString &ip);
         void clearAllRequests();
