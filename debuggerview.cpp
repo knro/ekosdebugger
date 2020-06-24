@@ -15,6 +15,7 @@ DebuggerView::DebuggerView(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::DebuggerView)
 {
+
     ui->setupUi(this);
     ui->statusbar->showMessage("Welcome to Ekos Debugger!");
     m_MountModel = new QStandardItemModel(this);
@@ -326,66 +327,111 @@ void DebuggerView::readXMLDriverList(const QString &driversFile)
 
 void DebuggerView::saveKStarsLogs()
 {
-    QString homePath = QDir::homePath();
+    //    QString homePath = settings.value("savepath/kstars", QDir::homePath()).toString();
+
+    QString homePath = loadSettings("kstars");
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
     QString filepath;
     filepath = QFileDialog::getExistingDirectory(this, "Save KStars logs", homePath, QFileDialog::ShowDirsOnly);
     qDebug() << filepath;
-
-    QString debugLog = ui->KStarsDebugLog->toPlainText();
-    QString appLog = ui->KStarsAppLog->toPlainText();
-
-    QString debuglogtxt = filepath + "/kstars_debug_log_" + timestamp + ".txt";
-    QFile debugfile( debuglogtxt );
-    if ( debugfile.open(QIODevice::ReadWrite) )
+    if(!filepath.isEmpty() && !filepath.isNull())
     {
-        QTextStream stream( &debugfile );
-        stream << debugLog << endl;
-    }
-    debugfile.close();
+        saveSettings("kstars", filepath);
+        QString debugLog = ui->KStarsDebugLog->toPlainText();
+        QString appLog = ui->KStarsAppLog->toPlainText();
 
-    QString applogtxt = filepath + "/kstars_app_log_" + timestamp + ".txt";
-    QFile appfile( applogtxt );
-    if ( appfile.open(QIODevice::ReadWrite) )
-    {
-        QTextStream stream( &appfile );
-        stream << appLog << endl;
-    }
-    appfile.close();
+        QString debuglogtxt = filepath + "/kstars_debug_log_" + timestamp + ".txt";
+        QFile debugfile( debuglogtxt );
+        if ( debugfile.open(QIODevice::ReadWrite) )
+        {
+            QTextStream stream( &debugfile );
+            stream << debugLog << endl;
+        }
+        debugfile.close();
 
-    ui->statusbar->showMessage("Saved KStars logs.");
+        QString applogtxt = filepath + "/kstars_app_log_" + timestamp + ".txt";
+        QFile appfile( applogtxt );
+        if ( appfile.open(QIODevice::ReadWrite) )
+        {
+            QTextStream stream( &appfile );
+            stream << appLog << endl;
+        }
+        appfile.close();
+
+        ui->statusbar->showMessage("Saved KStars logs.");
+    }
+
+    //    settings.setValue("kstars/savePath", filepath);
+    //    settings.setValue("indi/savePath", 68);
+
+
 }
 
 void DebuggerView::saveINDILogs()
 {
-    QString homePath = QDir::homePath();
+    //    QString homePath = settings.value("indi/savePath", QDir::homePath()).toString();
+    QString homePath = loadSettings("indi");
+    //    QString homePath = QDir::homePath();
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
     QString filepath;
     filepath = QFileDialog::getExistingDirectory(this, "Save INDI logs", homePath, QFileDialog::ShowDirsOnly);
     qDebug() << filepath;
-
-    QString debugLog = ui->INDIDebugLog->toPlainText();
-    QString appLog = ui->INDIAppLog->toPlainText();
-
-    QString debuglogtxt = filepath + "/indi_debug_log_" + timestamp + ".txt";
-    QFile debugfile( debuglogtxt );
-    if ( debugfile.open(QIODevice::ReadWrite) )
+    if(!filepath.isEmpty() && !filepath.isNull())
     {
-        QTextStream stream( &debugfile );
-        stream << debugLog << endl;
-    }
-    debugfile.close();
+        saveSettings("indi", filepath);
+        QString debugLog = ui->INDIDebugLog->toPlainText();
+        QString appLog = ui->INDIAppLog->toPlainText();
 
-    QString applogtxt = filepath + "/indi_app_log_" + timestamp + ".txt";
-    QFile appfile( applogtxt );
-    if ( appfile.open(QIODevice::ReadWrite) )
-    {
-        QTextStream stream( &appfile );
-        stream << appLog << endl;
-    }
-    appfile.close();
+        QString debuglogtxt = filepath + "/indi_debug_log_" + timestamp + ".txt";
+        QFile debugfile( debuglogtxt );
+        if ( debugfile.open(QIODevice::ReadWrite) )
+        {
+            QTextStream stream( &debugfile );
+            stream << debugLog << endl;
+        }
+        debugfile.close();
 
-    ui->statusbar->showMessage("Saved INDI logs.");
+        QString applogtxt = filepath + "/indi_app_log_" + timestamp + ".txt";
+        QFile appfile( applogtxt );
+        if ( appfile.open(QIODevice::ReadWrite) )
+        {
+            QTextStream stream( &appfile );
+            stream << appLog << endl;
+        }
+        appfile.close();
+
+        ui->statusbar->showMessage("Saved INDI logs.");
+    }
+
+    //    settings.setValue("indi/savePath", filepath);
+
+
+}
+
+void DebuggerView::saveSettings(QString process, QString savePath)
+{
+    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/ekosdebugger/";
+    QSettings setting(docPath + "config.ini", QSettings::IniFormat);
+    setting.beginGroup("SavePaths");
+    setting.setValue(process, savePath);
+    setting.endGroup();
+
+    qDebug() << "Saved";
+}
+
+QString DebuggerView::loadSettings(QString process)
+{
+    QString homePath = QDir::homePath();
+    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/ekosdebugger/";
+    QSettings setting(docPath + "config.ini", QSettings::IniFormat);
+    setting.beginGroup("SavePaths");
+    QString savePath = setting.value(process).toString();
+    if(savePath == "")
+        savePath = homePath;
+    setting.endGroup();
+
+    qDebug() << "Loaded";
+    return savePath;
 }
 
 //bool DebuggerView::readINDIHosts()

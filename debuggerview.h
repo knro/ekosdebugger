@@ -11,6 +11,7 @@
 #include <QXmlStreamReader>
 #include <QFileDialog>
 #include <QDateTime>
+#include <QSettings>
 
 #include "handler.h"
 #include "xmldriverslistreader.h"
@@ -88,6 +89,8 @@ class DebuggerView : public QMainWindow
         void loadProfiles();
         void loadDriverCombo();
         void loadDrivers();
+        void saveSettings(QString, QString);
+        QString loadSettings(QString);
 
         //DriverInfo::XMLSource xmlSource;
         QStringList driversStringList;
