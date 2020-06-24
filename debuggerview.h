@@ -63,7 +63,6 @@ class DebuggerView : public QMainWindow
         bool checkDriverAvailability(const QString &driver);
         QStringList INDIArgs;
 
-
     private slots:
         void processKStarsOutput();
         void processKStarsError();
@@ -76,7 +75,6 @@ class DebuggerView : public QMainWindow
         void createINDIArgs();
         void saveKStarsLogs();
         void saveINDILogs();
-
 
     private:
         QPointer<QProcess> m_KStarsProcess;

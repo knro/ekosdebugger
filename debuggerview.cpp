@@ -52,6 +52,8 @@ DebuggerView::~DebuggerView()
     delete ui;
     if(m_KStarsProcess != nullptr)
         stopKStars();
+    if(m_INDIProcess != nullptr)
+        stopINDI();
 }
 
 void DebuggerView::startKStars()
@@ -76,9 +78,14 @@ void DebuggerView::startKStars()
             ui->startKStarsB->setDisabled(false);
             ui->stopKStarsB->setDisabled(true);
             if(exitStatus == QProcess::CrashExit)
+            {
                 ui->statusbar->showMessage("KStars crashed.");
+                if(ui->restartKStarsCB->isChecked())
+                    startKStars();
+            }
             else
                 ui->statusbar->showMessage("KStars exited normally.");
+
         }
     });
 
@@ -134,6 +141,25 @@ void DebuggerView::startINDI()
 
     connect(m_INDIProcess, &QProcess::readyReadStandardOutput, this, &DebuggerView::processINDIOutput);
     connect(m_INDIProcess, &QProcess::readyReadStandardError, this, &DebuggerView::processINDIError);
+    connect(m_INDIProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            [ = ](int exitCode, QProcess::ExitStatus exitStatus)
+    {
+        Q_UNUSED(exitCode);
+        if (ui->stopINDIB->isEnabled())
+        {
+            ui->startINDIB->setDisabled(false);
+            ui->stopINDIB->setDisabled(true);
+            if(exitStatus == QProcess::CrashExit)
+            {
+                ui->statusbar->showMessage("INDI crashed.");
+                if(ui->restartINDICB->isChecked())
+                    startINDI();
+            }
+            else
+                ui->statusbar->showMessage("INDI exited normally.");
+        }
+    });
+
     m_INDIProcess->start("gdb", args);
 }
 
@@ -326,6 +352,8 @@ void DebuggerView::saveKStarsLogs()
         stream << appLog << endl;
     }
     appfile.close();
+
+    ui->statusbar->showMessage("Saved KStars logs.");
 }
 
 void DebuggerView::saveINDILogs()
@@ -356,6 +384,8 @@ void DebuggerView::saveINDILogs()
         stream << appLog << endl;
     }
     appfile.close();
+
+    ui->statusbar->showMessage("Saved INDI logs.");
 }
 
 //bool DebuggerView::readINDIHosts()
