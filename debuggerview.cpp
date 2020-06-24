@@ -334,7 +334,7 @@ void DebuggerView::readXMLDriverList(const QString &driversFile)
 void DebuggerView::saveKStarsLogs()
 {
     QSettings settings;
-    QString homePath = settings.value("paths/kstars", QDir::homePath()).toString();
+    QString homePath = settings.value("kstars/savePath", QDir::homePath()).toString();
 
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
     QString filepath;
@@ -342,7 +342,7 @@ void DebuggerView::saveKStarsLogs()
     qDebug() << filepath;
     if(!filepath.isEmpty() && !filepath.isNull())
     {
-        settings.setValue("paths/kstars", filepath);
+        settings.setValue("kstars/savePath", filepath);
         QString debugLog = ui->KStarsDebugLog->toPlainText();
         QString appLog = ui->KStarsAppLog->toPlainText();
 
@@ -376,14 +376,14 @@ void DebuggerView::saveKStarsLogs()
 void DebuggerView::saveINDILogs()
 {
     QSettings settings;
-    QString homePath = settings.value("paths/indi", QDir::homePath()).toString();
+    QString homePath = settings.value("indi/savePath", QDir::homePath()).toString();
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
     QString filepath;
     filepath = QFileDialog::getExistingDirectory(this, "Save INDI logs", homePath, QFileDialog::ShowDirsOnly);
     qDebug() << filepath;
     if(!filepath.isEmpty() && !filepath.isNull())
     {
-        settings.setValue("paths/indi", filepath);
+        settings.setValue("indi/savePath", filepath);
 
         QString debugLog = ui->INDIDebugLog->toPlainText();
         QString appLog = ui->INDIAppLog->toPlainText();
