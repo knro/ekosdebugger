@@ -59,7 +59,7 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(&watcher, &QFileSystemWatcher::directoryChanged, this, &DebuggerView::findLogFile);
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &DebuggerView::findLogFile);
 
-
+    readXMLDrivers();
     loadProfiles();
 }
 
@@ -152,7 +152,7 @@ void DebuggerView::startINDI()
     INDItimestamp = QDateTime::currentDateTime().toString("yy-MM-ddThh-mm-ss");
     m_INDIProcess = new QProcess();
     QStringList args;
-    args << "-batch" << "-ex" << "set follow-fork-mode child" << "-ex" << "bt" << "--args"
+    args << "-batch" << "-ex" << "run" << "-ex" << "set follow-fork-mode child" << "-ex" << "run" << "-ex" << "bt" << "--args"
          << "indiserver" << "-r" << "0" << "-v" << INDIArgs;
     //    gdb -batch -ex "set follow-fork-mode child" -ex "run" -ex "bt" --args indiserver -r 0 -v
     ui->startINDIB->setDisabled(true);
