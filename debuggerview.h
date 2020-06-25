@@ -67,6 +67,7 @@ class DebuggerView : public QMainWindow
         QStringList INDIArgs;
         QFileSystemWatcher watcher;
         QString KStarsLogFilePath;
+        QString INDItimestamp = "";
 
     private slots:
         void processKStarsOutput();

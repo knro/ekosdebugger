@@ -79,6 +79,7 @@ void DebuggerView::startKStars()
     args << "-batch" << "-ex" << "run" << "-ex" << "bt" << "kstars";
     ui->startKStarsB->setDisabled(true);
     ui->stopKStarsB->setDisabled(false);
+    ui->comboBox->setDisabled(true);
     ui->statusbar->showMessage("Started KStars.");
 
     //reads output and error process logs and connects them to their corresponding proccesing functions.
@@ -93,6 +94,7 @@ void DebuggerView::startKStars()
         {
             ui->startKStarsB->setDisabled(false);
             ui->stopKStarsB->setDisabled(true);
+            ui->comboBox->setDisabled(false);
             if(exitStatus == QProcess::CrashExit)
             {
                 ui->statusbar->showMessage("KStars crashed.");
@@ -113,6 +115,7 @@ void DebuggerView::stopKStars()
     m_KStarsProcess->terminate();
     ui->startKStarsB->setDisabled(false);
     ui->stopKStarsB->setDisabled(true);
+    ui->comboBox->setDisabled(false);
     ui->statusbar->showMessage("Stopped KStars.");
 }
 
@@ -146,6 +149,7 @@ void DebuggerView::copyKStarsDebugLog()
 
 void DebuggerView::startINDI()
 {
+    INDItimestamp = QDateTime::currentDateTime().toString("yy-MM-ddThh-mm-ss");
     m_INDIProcess = new QProcess();
     QStringList args;
     args << "-batch" << "-ex" << "set follow-fork-mode child" << "-ex" << "bt" << "--args"
@@ -153,6 +157,8 @@ void DebuggerView::startINDI()
     //    gdb -batch -ex "set follow-fork-mode child" -ex "run" -ex "bt" --args indiserver -r 0 -v
     ui->startINDIB->setDisabled(true);
     ui->stopINDIB->setDisabled(false);
+    ui->profileCombo->setDisabled(true);
+    ui->driverCombo->setDisabled(true);
     ui->statusbar->showMessage("Started INDI.");
 
     connect(m_INDIProcess, &QProcess::readyReadStandardOutput, this, &DebuggerView::processINDIOutput);
@@ -165,6 +171,8 @@ void DebuggerView::startINDI()
         {
             ui->startINDIB->setDisabled(false);
             ui->stopINDIB->setDisabled(true);
+            ui->profileCombo->setDisabled(false);
+            ui->driverCombo->setDisabled(false);
             if(exitStatus == QProcess::CrashExit)
             {
                 ui->statusbar->showMessage("INDI crashed.");
@@ -184,6 +192,8 @@ void DebuggerView::stopINDI()
     m_INDIProcess->terminate();
     ui->startINDIB->setDisabled(false);
     ui->stopINDIB->setDisabled(true);
+    ui->profileCombo->setDisabled(false);
+    ui->driverCombo->setDisabled(false);
     ui->statusbar->showMessage("Stopped INDI.");
 }
 
@@ -342,10 +352,29 @@ void DebuggerView::readXMLDriverList(const QString &driversFile)
 
 void DebuggerView::saveKStarsLogs()
 {
+    //    QFile f(KStarsLogFilePath);
+    //    QFileInfo fileInfo(f.fileName());
+    //    QString KStarsLogFileName(fileInfo.fileName());
+    QString timestamp;
+    QString KStarsLogFileName = "";
+    QString KStarsLogFolderName = "";
+
+    if (KStarsLogFilePath != "")
+    {
+        QStringList pieces = KStarsLogFilePath.split( "/" );
+        KStarsLogFolderName = pieces.value( pieces.length() - 2 );
+        KStarsLogFileName = pieces.value( pieces.length() - 1 );
+        QRegExp separator("[(_|.)]");
+        QStringList parts = KStarsLogFileName.split(separator);
+        timestamp = KStarsLogFolderName + "T" + parts[1];
+    }
+    else
+        timestamp = QDateTime::currentDateTime().toString("yy-MM-ddThh-mm-ss");
+
     QSettings settings;
     QString homePath = settings.value("kstars/savePath", QDir::homePath()).toString();
 
-    QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
+
     QString folderpath;
     folderpath = QFileDialog::getExistingDirectory(this, "Save KStars logs", homePath, QFileDialog::ShowDirsOnly);
 
@@ -380,34 +409,40 @@ void DebuggerView::saveKStarsLogs()
         //    QElapsedTimer tmr;
         //    tmr.start();
         //        QString dataPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-        QString lastlines = "";
-        QFile file(KStarsLogFilePath);
-        if(file.open(QIODevice::ReadOnly))
-        {
-            file.seek(file.size() - 1);
-            int count = 0;
-            int lines = 2000;
-            while ( (count <= lines) && (file.pos() > 0) )
-            {
-                QString ch = file.read(1);
-                file.seek(file.pos() - 2);
-                if (ch == "\n")
-                    count++;
-            }
-            lastlines = file.readAll();
+        //        QString lastlines = "";
+        //        QFile file(KStarsLogFilePath);
+        //        if(file.open(QIODevice::ReadOnly))
+        //        {
+        //            file.seek(file.size() - 1);
+        //            int count = 0;
+        //            int lines = 2000;
+        //            while ( (count <= lines) && (file.pos() > 0) )
+        //            {
+        //                QString ch = file.read(1);
+        //                file.seek(file.pos() - 2);
+        //                if (ch == "\n")
+        //                    count++;
+        //            }
+        //            lastlines = file.readAll();
 
-            //    qDebug() <<"reading took" << tmr.elapsed()<< " ms";
-            file.close();
+        //            //    qDebug() <<"reading took" << tmr.elapsed()<< " ms";
+        //            file.close();
+        //        }
+        if (QFile::exists(filepath + "/" + KStarsLogFileName))
+        {
+            QFile::remove(filepath + "/" + KStarsLogFileName);
         }
 
-        QString logtxt = filepath + "/kstars_app_log_" + timestamp + ".txt";
-        QFile logfile( logtxt );
-        if ( logfile.open(QIODevice::ReadWrite) )
-        {
-            QTextStream stream( &logfile );
-            stream << lastlines << endl;
-        }
-        logfile.close();
+        QFile::copy(KStarsLogFilePath, filepath + "/" + KStarsLogFileName);
+
+        //        QString logtxt = filepath + "/kstars_app_log_" + timestamp + ".txt";
+        //        QFile logfile( logtxt );
+        //        if ( logfile.open(QIODevice::ReadWrite) )
+        //        {
+        //            QTextStream stream( &logfile );
+        //            stream << lastlines << endl;
+        //        }
+        //        logfile.close();
         QStringList zipArgs;
         zipArgs << "-r" << "-j" << folderpath + "/kstars_logs_" + timestamp + ".zip" << filepath;
         //        zip -r folderpath/kstars_logs_timestamp.zip filepath
@@ -431,7 +466,11 @@ void DebuggerView::saveINDILogs()
 {
     QSettings settings;
     QString homePath = settings.value("indi/savePath", QDir::homePath()).toString();
-    QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
+    QString timestamp;
+    if (INDItimestamp == "")
+        timestamp = QDateTime::currentDateTime().toString("yy-MM-ddThh-mm-ss");
+    else
+        timestamp = INDItimestamp;
 
     QString folderpath;
     folderpath = QFileDialog::getExistingDirectory(this, "Save INDI logs", homePath, QFileDialog::ShowDirsOnly);
