@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Jasem Mutlaq <mutlaqja@ikarustech.com>
 Build-Depends: cmake,
                debhelper (>= 9.0.0),
-               qtbase5-dev,               
+               qtbase5-dev,
                libqt5sql5-sqlite,
                libqt5xml5
 Standards-Version: 3.9.3
@@ -13,7 +13,7 @@ Homepage: https://indilib.org
 Package: ekos-debugger
 Architecture: any
 Section: science
-recommends: kstars, indi-bin
+recommends: kstars-bleeding, indi-bin
 Depends: ${shlibs:Depends}, ${misc:Depends}, breeze-icon-theme, libqt5sql5-sqlite, libqt5xml5
 Description: Debugger for KStars and INDI
  Debug and profile KStars and INDI
