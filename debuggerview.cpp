@@ -47,7 +47,7 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(ui->startKStarsB, &QPushButton::clicked, this, &DebuggerView::startKStars);
     connect(ui->stopKStarsB, &QPushButton::clicked, this, &DebuggerView::stopKStars);
     connect(ui->copyKStarsDebugLogB, &QPushButton::clicked, this, &DebuggerView::copyKStarsDebugLog);
-    connect(ui->copyKStarsAppLogB, &QPushButton::clicked, this, &DebuggerView::copyKStarsAppLog);
+    //    connect(ui->copyKStarsAppLogB, &QPushButton::clicked, this, &DebuggerView::copyKStarsAppLog);
     connect(ui->startINDIB, &QPushButton::clicked, this, &DebuggerView::startINDI);
     connect(ui->stopINDIB, &QPushButton::clicked, this, &DebuggerView::stopINDI);
     connect(ui->copyINDIDebugLogB, &QPushButton::clicked, this, &DebuggerView::copyINDIDebugLog);
@@ -83,7 +83,7 @@ void DebuggerView::startKStars()
 
     //reads output and error process logs and connects them to their corresponding proccesing functions.
     connect(m_KStarsProcess, &QProcess::readyReadStandardOutput, this, &DebuggerView::processKStarsOutput);
-    connect(m_KStarsProcess, &QProcess::readyReadStandardError, this, &DebuggerView::processKStarsError);
+    //    connect(m_KStarsProcess, &QProcess::readyReadStandardError, this, &DebuggerView::processKStarsError);
     //catches if KStars process has exited or crashed.
     connect(m_KStarsProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             [ = ](int exitCode, QProcess::ExitStatus exitStatus)
@@ -123,12 +123,12 @@ void DebuggerView::processKStarsOutput()
     ui->KStarsDebugLog->append(buffer);
 }
 
-void DebuggerView::processKStarsError()
-{
-    QString buffer = m_KStarsProcess->readAllStandardError();
-    buffer = buffer.trimmed();
-    ui->KStarsAppLog->append(buffer);
-}
+//void DebuggerView::processKStarsError()
+//{
+//    QString buffer = m_KStarsProcess->readAllStandardError();
+//    buffer = buffer.trimmed();
+//    ui->KStarsAppLog->append(buffer);
+//}
 
 void DebuggerView::copyKStarsDebugLog()
 {
@@ -137,12 +137,12 @@ void DebuggerView::copyKStarsDebugLog()
     ui->statusbar->showMessage("Copied KStars Debug log.");
 }
 
-void DebuggerView::copyKStarsAppLog()
-{
-    ui->KStarsAppLog->selectAll();
-    ui->KStarsAppLog->copy();
-    ui->statusbar->showMessage("Copied KStars Application log.");
-}
+//void DebuggerView::copyKStarsAppLog()
+//{
+//    ui->KStarsAppLog->selectAll();
+//    ui->KStarsAppLog->copy();
+//    ui->statusbar->showMessage("Copied KStars Application log.");
+//}
 
 void DebuggerView::startINDI()
 {
@@ -346,14 +346,18 @@ void DebuggerView::saveKStarsLogs()
     QString homePath = settings.value("kstars/savePath", QDir::homePath()).toString();
 
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
+    QString folderpath;
+    folderpath = QFileDialog::getExistingDirectory(this, "Save KStars logs", homePath, QFileDialog::ShowDirsOnly);
+
+    QDir().mkdir(folderpath + "/kstars_logs_" + timestamp);
     QString filepath;
-    filepath = QFileDialog::getExistingDirectory(this, "Save KStars logs", homePath, QFileDialog::ShowDirsOnly);
+    filepath = folderpath + "/kstars_logs_" + timestamp;
     qDebug() << filepath;
     if(!filepath.isEmpty() && !filepath.isNull())
     {
-        settings.setValue("kstars/savePath", filepath);
+        settings.setValue("kstars/savePath", folderpath);
         QString debugLog = ui->KStarsDebugLog->toPlainText();
-        QString appLog = ui->KStarsAppLog->toPlainText();
+        //        QString appLog = ui->KStarsAppLog->toPlainText();
 
         QString debuglogtxt = filepath + "/kstars_debug_log_" + timestamp + ".txt";
         QFile debugfile( debuglogtxt );
@@ -364,14 +368,14 @@ void DebuggerView::saveKStarsLogs()
         }
         debugfile.close();
 
-        QString applogtxt = filepath + "/kstars_app_log_" + timestamp + ".txt";
-        QFile appfile( applogtxt );
-        if ( appfile.open(QIODevice::ReadWrite) )
-        {
-            QTextStream stream( &appfile );
-            stream << appLog << endl;
-        }
-        appfile.close();
+        //        QString applogtxt = filepath + "/kstars_app_log_" + timestamp + ".txt";
+        //        QFile appfile( applogtxt );
+        //        if ( appfile.open(QIODevice::ReadWrite) )
+        //        {
+        //            QTextStream stream( &appfile );
+        //            stream << appLog << endl;
+        //        }
+        //        appfile.close();
 
         //    QElapsedTimer tmr;
         //    tmr.start();
@@ -396,7 +400,7 @@ void DebuggerView::saveKStarsLogs()
             file.close();
         }
 
-        QString logtxt = filepath + "/log_" + timestamp + ".txt";
+        QString logtxt = filepath + "/kstars_app_log_" + timestamp + ".txt";
         QFile logfile( logtxt );
         if ( logfile.open(QIODevice::ReadWrite) )
         {
@@ -404,6 +408,15 @@ void DebuggerView::saveKStarsLogs()
             stream << lastlines << endl;
         }
         logfile.close();
+        QStringList zipArgs;
+        zipArgs << "-r" << "-j" << folderpath + "/kstars_logs_" + timestamp + ".zip" << filepath;
+        //        zip -r folderpath/kstars_logs_timestamp.zip filepath
+        m_zippingProcess = new QProcess();
+        m_zippingProcess->start("zip", zipArgs);
+        m_zippingProcess->waitForFinished();
+        QString output(m_zippingProcess->readAllStandardOutput());
+        qDebug() << output;
+        m_zippingProcess->close();
 
         ui->statusbar->showMessage("Saved KStars logs.");
     }
@@ -419,12 +432,17 @@ void DebuggerView::saveINDILogs()
     QSettings settings;
     QString homePath = settings.value("indi/savePath", QDir::homePath()).toString();
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh-mm-ss");
+
+    QString folderpath;
+    folderpath = QFileDialog::getExistingDirectory(this, "Save INDI logs", homePath, QFileDialog::ShowDirsOnly);
+
+    QDir().mkdir(folderpath + "/indi_logs_" + timestamp);
     QString filepath;
-    filepath = QFileDialog::getExistingDirectory(this, "Save INDI logs", homePath, QFileDialog::ShowDirsOnly);
+    filepath = folderpath + "/indi_logs_" + timestamp;
     qDebug() << filepath;
     if(!filepath.isEmpty() && !filepath.isNull())
     {
-        settings.setValue("indi/savePath", filepath);
+        settings.setValue("indi/savePath", folderpath);
 
         QString debugLog = ui->INDIDebugLog->toPlainText();
         QString appLog = ui->INDIAppLog->toPlainText();
@@ -446,6 +464,16 @@ void DebuggerView::saveINDILogs()
             stream << appLog << endl;
         }
         appfile.close();
+
+        QStringList zipArgs;
+        zipArgs << "-r" << "-j" << folderpath + "/indi_logs_" + timestamp + ".zip" << filepath;
+        //        zip -r folderpath/indi_logs_timestamp.zip filepath
+        m_zippingProcess = new QProcess();
+        m_zippingProcess->start("zip", zipArgs);
+        m_zippingProcess->waitForFinished();
+        QString output(m_zippingProcess->readAllStandardOutput());
+        qDebug() << output;
+        m_zippingProcess->close();
 
         ui->statusbar->showMessage("Saved INDI logs.");
     }

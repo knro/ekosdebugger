@@ -70,9 +70,9 @@ class DebuggerView : public QMainWindow
 
     private slots:
         void processKStarsOutput();
-        void processKStarsError();
+        //        void processKStarsError();
         void copyKStarsDebugLog();
-        void copyKStarsAppLog();
+        //        void copyKStarsAppLog();
         void processINDIOutput();
         void processINDIError();
         void copyINDIDebugLog();
@@ -86,6 +86,7 @@ class DebuggerView : public QMainWindow
     private:
         QPointer<QProcess> m_KStarsProcess;
         QPointer<QProcess> m_INDIProcess;
+        QPointer<QProcess> m_zippingProcess;
         Ui::DebuggerView *ui;
         QList<std::shared_ptr<ProfileInfo>> profiles;
         void startKStars();
