@@ -82,6 +82,9 @@ class DebuggerView : public QMainWindow
         void saveKStarsLogs();
         void saveINDILogs();
         void findLogFile(const QString &str);
+        void clearKStarsDebugLog();
+        void clearINDIDebugLog();
+        void clearINDIAppLog();
 
 
     private:

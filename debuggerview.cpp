@@ -58,6 +58,9 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(ui->saveINDILogsB, &QPushButton::clicked, this, &DebuggerView::saveINDILogs);
     connect(&watcher, &QFileSystemWatcher::directoryChanged, this, &DebuggerView::findLogFile);
     connect(&watcher, &QFileSystemWatcher::fileChanged, this, &DebuggerView::findLogFile);
+    connect(ui->clearKStarsDebugLogB, &QPushButton::clicked, this, &DebuggerView::clearKStarsDebugLog);
+    connect(ui->clearINDIDebugLogB, &QPushButton::clicked, this, &DebuggerView::clearINDIDebugLog);
+    connect(ui->clearINDIAppLogB, &QPushButton::clicked, this, &DebuggerView::clearINDIAppLog);
 
     readXMLDrivers();
     loadProfiles();
@@ -70,6 +73,33 @@ DebuggerView::~DebuggerView()
     if(m_INDIProcess != nullptr)
         stopINDI();
     delete ui;
+}
+
+void DebuggerView::clearKStarsDebugLog()
+{
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Clear KStars Debug Log", "Are you sure you want to clear the debug log?",
+                                  QMessageBox::Yes | QMessageBox::No);
+    if (reply == QMessageBox::Yes)
+        ui->KStarsDebugLog->clear();
+}
+
+void DebuggerView::clearINDIDebugLog()
+{
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Clear INDI Debug Log", "Are you sure you want to clear the debug log?",
+                                  QMessageBox::Yes | QMessageBox::No);
+    if (reply == QMessageBox::Yes)
+        ui->INDIDebugLog->clear();
+}
+
+void DebuggerView::clearINDIAppLog()
+{
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Clear INDI App Log", "Are you sure you want to clear the app log?",
+                                  QMessageBox::Yes | QMessageBox::No);
+    if (reply == QMessageBox::Yes)
+        ui->INDIAppLog->clear();
 }
 
 void DebuggerView::startKStars()
@@ -152,9 +182,9 @@ void DebuggerView::startINDI()
     INDItimestamp = QDateTime::currentDateTime().toString("yy-MM-ddThh-mm-ss");
     m_INDIProcess = new QProcess();
     QStringList args;
-    args << "-batch" << "-ex" << "run" << "-ex" << "set follow-fork-mode child" << "-ex" << "run" << "-ex" << "bt" << "--args"
+    args << "-batch" << "-ex" << "set follow-fork-mode child" << "-ex" << "run" << "-ex" << "bt" << "--args"
          << "indiserver" << "-r" << "0" << "-v" << INDIArgs;
-    //    gdb -batch -ex "set follow-fork-mode child" -ex "run" -ex "bt" --args indiserver -r 0 -v
+    //    gdb -batch -ex "set follow-fork-mode child" -ex "run" -ex "bt" --args indiserver -r -0 -v
     ui->startINDIB->setDisabled(true);
     ui->stopINDIB->setDisabled(false);
     ui->profileCombo->setDisabled(true);
