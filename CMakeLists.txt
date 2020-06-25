@@ -32,3 +32,5 @@ target_link_libraries(ekosdebugger PRIVATE
     Qt5::Xml
     )
 
+install(TARGETS ekosdebugger RUNTIME DESTINATION bin )
+
