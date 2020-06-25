@@ -65,11 +65,11 @@ DebuggerView::DebuggerView(QWidget *parent)
 
 DebuggerView::~DebuggerView()
 {
-    delete ui;
     if(m_KStarsProcess != nullptr)
         stopKStars();
     if(m_INDIProcess != nullptr)
         stopINDI();
+    delete ui;
 }
 
 void DebuggerView::startKStars()
