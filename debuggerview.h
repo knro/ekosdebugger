@@ -12,6 +12,8 @@
 #include <QFileDialog>
 #include <QDateTime>
 #include <QSettings>
+#include <QFileSystemWatcher>
+#include <QMessageBox>
 
 #include "handler.h"
 #include "xmldriverslistreader.h"
@@ -63,6 +65,8 @@ class DebuggerView : public QMainWindow
         QString findDriverByLabel(const QString &label);
         bool checkDriverAvailability(const QString &driver);
         QStringList INDIArgs;
+        QFileSystemWatcher watcher;
+        QString KStarsLogFilePath;
 
     private slots:
         void processKStarsOutput();
@@ -76,6 +80,8 @@ class DebuggerView : public QMainWindow
         void createINDIArgs();
         void saveKStarsLogs();
         void saveINDILogs();
+        void findLogFile(const QString &str);
+
 
     private:
         QPointer<QProcess> m_KStarsProcess;

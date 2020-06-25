@@ -9,12 +9,19 @@
 #include <QXmlSimpleReader>
 #include <QStandardPaths>
 #include <driverinfo.h>
+
 #define ERRMSG_SIZE    1024
 
 DebuggerView::DebuggerView(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::DebuggerView)
 {
+    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    QString currentDate = QDate::currentDate().toString("yyyy-MM-dd");
+    if(QDir(dataPath + "/kstars/logs/" + currentDate).exists())
+        watcher.addPath( dataPath + "/kstars/logs/" + currentDate);
+    else
+        watcher.addPath( dataPath + "/kstars/logs");
 
     ui->setupUi(this);
     ui->statusbar->showMessage("Welcome to Ekos Debugger!");
@@ -49,8 +56,10 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(ui->driverCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DebuggerView::createINDIArgs);
     connect(ui->saveKStarsLogsB, &QPushButton::clicked, this, &DebuggerView::saveKStarsLogs);
     connect(ui->saveINDILogsB, &QPushButton::clicked, this, &DebuggerView::saveINDILogs);
+    connect(&watcher, &QFileSystemWatcher::directoryChanged, this, &DebuggerView::findLogFile);
+    connect(&watcher, &QFileSystemWatcher::fileChanged, this, &DebuggerView::findLogFile);
 
-    readXMLDrivers();
+
     loadProfiles();
 }
 
@@ -364,6 +373,38 @@ void DebuggerView::saveKStarsLogs()
         }
         appfile.close();
 
+        //    QElapsedTimer tmr;
+        //    tmr.start();
+        //        QString dataPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+        QString lastlines = "";
+        QFile file(KStarsLogFilePath);
+        if(file.open(QIODevice::ReadOnly))
+        {
+            file.seek(file.size() - 1);
+            int count = 0;
+            int lines = 2000;
+            while ( (count <= lines) && (file.pos() > 0) )
+            {
+                QString ch = file.read(1);
+                file.seek(file.pos() - 2);
+                if (ch == "\n")
+                    count++;
+            }
+            lastlines = file.readAll();
+
+            //    qDebug() <<"reading took" << tmr.elapsed()<< " ms";
+            file.close();
+        }
+
+        QString logtxt = filepath + "/log_" + timestamp + ".txt";
+        QFile logfile( logtxt );
+        if ( logfile.open(QIODevice::ReadWrite) )
+        {
+            QTextStream stream( &logfile );
+            stream << lastlines << endl;
+        }
+        logfile.close();
+
         ui->statusbar->showMessage("Saved KStars logs.");
     }
 
@@ -413,6 +454,29 @@ void DebuggerView::saveINDILogs()
 
 
 }
+
+void DebuggerView::findLogFile(const QString &str)
+{
+    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    QDir logsDir(dataPath + "/kstars/logs");
+    QStringList logFolders = logsDir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot, QDir::Time);
+    QDir logDir(dataPath + "/kstars/logs/" + logFolders[0]);
+    QStringList logList = logDir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot, QDir::Time);
+
+    if(str == dataPath + "/kstars/logs")
+    {
+        watcher.addPath(dataPath + "/kstars/logs/" + logFolders[0]);
+        KStarsLogFilePath = dataPath + "/kstars/logs/" + logFolders[0] + "/" + logList[0];
+    }
+    else if(str == dataPath + "/kstars/logs/" + logFolders[0])
+    {
+        KStarsLogFilePath = dataPath + "/kstars/logs/" + logFolders[0] + "/" + logList[0];
+    }
+
+    qDebug() << watcher.directories();
+    qDebug() << KStarsLogFilePath;
+}
+
 //bool DebuggerView::readINDIHosts()
 //{
 //    QString indiFile("indihosts.xml");
