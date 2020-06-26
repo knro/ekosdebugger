@@ -16,20 +16,22 @@
  Boston, MA 02110-1301, USA.
 *******************************************************************************/
 
-#include "debuggerview.h"
-#include "./ui_debuggerview.h"
-
 #include <QDebug>
-
-#include "userdb.h"
-
+#include <QTimer>
 #include <QStandardItemModel>
 #include <QXmlSimpleReader>
 #include <QStandardPaths>
-#include <driverinfo.h>
+
+#include "driverinfo.h"
+#include "userdb.h"
+#include "debuggerview.h"
+#include "./ui_debuggerview.h"
 
 #define ERRMSG_SIZE    1024
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 DebuggerView::DebuggerView(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::DebuggerView)
@@ -65,7 +67,6 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(ui->startKStarsB, &QPushButton::clicked, this, &DebuggerView::startKStars);
     connect(ui->stopKStarsB, &QPushButton::clicked, this, &DebuggerView::stopKStars);
     connect(ui->copyKStarsDebugLogB, &QPushButton::clicked, this, &DebuggerView::copyKStarsDebugLog);
-    //    connect(ui->copyKStarsAppLogB, &QPushButton::clicked, this, &DebuggerView::copyKStarsAppLog);
     connect(ui->startINDIB, &QPushButton::clicked, this, &DebuggerView::startINDI);
     connect(ui->stopINDIB, &QPushButton::clicked, this, &DebuggerView::stopINDI);
     connect(ui->copyINDIDebugLogB, &QPushButton::clicked, this, &DebuggerView::copyINDIDebugLog);
@@ -84,6 +85,9 @@ DebuggerView::DebuggerView(QWidget *parent)
     loadProfiles();
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 DebuggerView::~DebuggerView()
 {
     if(m_KStarsProcess != nullptr)
@@ -93,6 +97,9 @@ DebuggerView::~DebuggerView()
     delete ui;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::clearKStarsDebugLog()
 {
     QMessageBox::StandardButton reply;
@@ -102,6 +109,9 @@ void DebuggerView::clearKStarsDebugLog()
         ui->KStarsDebugLog->clear();
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::clearINDIDebugLog()
 {
     QMessageBox::StandardButton reply;
@@ -111,6 +121,9 @@ void DebuggerView::clearINDIDebugLog()
         ui->INDIDebugLog->clear();
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::clearINDIAppLog()
 {
     QMessageBox::StandardButton reply;
@@ -120,16 +133,24 @@ void DebuggerView::clearINDIAppLog()
         ui->INDIAppLog->clear();
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::startKStars()
 {
     m_KStarsProcess = new QProcess();
     QStringList args;
     args << "-batch" << "-ex" << "run" << "-ex" << "bt" << "kstars";
-    ui->startKStarsB->setDisabled(true);
-    ui->stopKStarsB->setDisabled(false);
-    ui->comboBox->setDisabled(true);
+    ui->startKStarsB->setEnabled(false);
+    ui->stopKStarsB->setEnabled(true);
+    for (auto &oneButton : ui->modulesButtonGroup->buttons())
+        oneButton->setEnabled(false);
     ui->statusbar->showMessage("Started KStars.");
 
+    m_EkosInterfaceCounter = 0;
+
+    // Set which Ekos logging is supposed to be on/off so that the log file is concise and useful for developmer
+    connect(m_KStarsProcess, &QProcess::started, this, &DebuggerView::connectEkosDBus);
     //reads output and error process logs and connects them to their corresponding proccesing functions.
     connect(m_KStarsProcess, &QProcess::readyReadStandardOutput, this, &DebuggerView::processKStarsOutput);
     //    connect(m_KStarsProcess, &QProcess::readyReadStandardError, this, &DebuggerView::processKStarsError);
@@ -140,9 +161,10 @@ void DebuggerView::startKStars()
         Q_UNUSED(exitCode);
         if (ui->stopKStarsB->isEnabled())
         {
-            ui->startKStarsB->setDisabled(false);
-            ui->stopKStarsB->setDisabled(true);
-            ui->comboBox->setDisabled(false);
+            ui->startKStarsB->setEnabled(true);
+            ui->stopKStarsB->setEnabled(false);
+            for (auto &oneButton : ui->modulesButtonGroup->buttons())
+                oneButton->setEnabled(true);
             if(exitStatus == QProcess::CrashExit)
             {
                 ui->statusbar->showMessage("KStars crashed.");
@@ -158,15 +180,22 @@ void DebuggerView::startKStars()
     m_KStarsProcess->start("gdb", args);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::stopKStars()
 {
     m_KStarsProcess->terminate();
-    ui->startKStarsB->setDisabled(false);
-    ui->stopKStarsB->setDisabled(true);
-    ui->comboBox->setDisabled(false);
+    ui->startKStarsB->setEnabled(true);
+    ui->stopKStarsB->setEnabled(false);
+    for (auto &oneButton : ui->modulesButtonGroup->buttons())
+        oneButton->setEnabled(true);
     ui->statusbar->showMessage("Stopped KStars.");
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::processKStarsOutput()
 {
     QString buffer = m_KStarsProcess->readAllStandardOutput();
@@ -174,13 +203,9 @@ void DebuggerView::processKStarsOutput()
     ui->KStarsDebugLog->append(buffer);
 }
 
-//void DebuggerView::processKStarsError()
-//{
-//    QString buffer = m_KStarsProcess->readAllStandardError();
-//    buffer = buffer.trimmed();
-//    ui->KStarsAppLog->append(buffer);
-//}
-
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::copyKStarsDebugLog()
 {
     ui->KStarsDebugLog->selectAll();
@@ -188,13 +213,9 @@ void DebuggerView::copyKStarsDebugLog()
     ui->statusbar->showMessage("Copied KStars Debug log.");
 }
 
-//void DebuggerView::copyKStarsAppLog()
-//{
-//    ui->KStarsAppLog->selectAll();
-//    ui->KStarsAppLog->copy();
-//    ui->statusbar->showMessage("Copied KStars Application log.");
-//}
-
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::startINDI()
 {
     INDItimestamp = QDateTime::currentDateTime().toString("yy-MM-ddThh-mm-ss");
@@ -235,6 +256,9 @@ void DebuggerView::startINDI()
     m_INDIProcess->start("gdb", args);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::stopINDI()
 {
     m_INDIProcess->terminate();
@@ -245,6 +269,9 @@ void DebuggerView::stopINDI()
     ui->statusbar->showMessage("Stopped INDI.");
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::processINDIOutput()
 {
     QString buffer = m_INDIProcess->readAllStandardOutput();
@@ -252,6 +279,9 @@ void DebuggerView::processINDIOutput()
     ui->INDIDebugLog->append(buffer);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::processINDIError()
 {
     QString buffer = m_INDIProcess->readAllStandardError();
@@ -259,6 +289,9 @@ void DebuggerView::processINDIError()
     ui->INDIAppLog->append(buffer);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::copyINDIDebugLog()
 {
     ui->INDIDebugLog->selectAll();
@@ -266,6 +299,9 @@ void DebuggerView::copyINDIDebugLog()
     ui->statusbar->showMessage("Copied INDI Debug log.");
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::copyINDIAppLog()
 {
     ui->INDIAppLog->selectAll();
@@ -273,7 +309,9 @@ void DebuggerView::copyINDIAppLog()
     ui->statusbar->showMessage("Copied INDI Application log.");
 }
 
-//from manager.cpp
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::loadProfiles()
 {
     profiles.clear();
@@ -281,11 +319,13 @@ void DebuggerView::loadProfiles()
 
     for (auto &pi : profiles)
     {
-        //qDebug() << pi->name;
         ui->profileCombo->addItem(pi->name);
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::loadDriverCombo()
 {
     currProfile = nullptr;
@@ -304,6 +344,9 @@ void DebuggerView::loadDriverCombo()
     setPi(currProfile);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::createINDIArgs()
 {
     if (ui->driverCombo->currentText() == nullptr)
@@ -341,6 +384,9 @@ void DebuggerView::createINDIArgs()
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::setPi(ProfileInfo * value)
 {
     pi = value;
@@ -359,6 +405,9 @@ void DebuggerView::setPi(ProfileInfo * value)
 
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 bool DebuggerView::readXMLDrivers()
 {
     // TODO fix it for MacOS
@@ -379,6 +428,9 @@ bool DebuggerView::readXMLDrivers()
     return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::readXMLDriverList(const QString &driversFile)
 {
     QFile file(driversFile);
@@ -398,6 +450,9 @@ void DebuggerView::readXMLDriverList(const QString &driversFile)
         driverslist->print();
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::saveKStarsLogs()
 {
     //    QFile f(KStarsLogFilePath);
@@ -510,6 +565,9 @@ void DebuggerView::saveKStarsLogs()
 
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::saveINDILogs()
 {
     QSettings settings;
@@ -570,6 +628,9 @@ void DebuggerView::saveINDILogs()
 
 }
 
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::findLogFile(const QString &str)
 {
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
@@ -588,93 +649,85 @@ void DebuggerView::findLogFile(const QString &str)
         KStarsLogFilePath = dataPath + "/kstars/logs/" + logFolders[0] + "/" + logList[0];
     }
 
-    qDebug() << watcher.directories();
-    qDebug() << KStarsLogFilePath;
+    //qDebug() << watcher.directories();
+    //qDebug() << KStarsLogFilePath;
 }
 
-//bool DebuggerView::readINDIHosts()
-//{
-//    QString indiFile("indihosts.xml");
-//    //QFile localeFile;
-//    QFile file;
-//    char errmsg[1024];
-//    char c;
-//    LilXML *xmlParser = newLilXML();
-//    XMLEle *root      = nullptr;
-//    XMLAtt *ap        = nullptr;
-//    QString hName, hHost, hPort;
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
+void DebuggerView::connectEkosDBus()
+{
+    m_EkosInterface = new QDBusInterface("org.kde.kstars",
+                                         "/KStars/Ekos",
+                                         "org.kde.kstars.Ekos",
+                                         QDBusConnection::sessionBus(),
+                                         this);
 
-//    lastGroup = nullptr;
-//    file.setFileName(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + indiFile);
-//    //    file.setFileName(KSPaths::locate(QStandardPaths::GenericDataLocation, indiFile));
-//    if (file.fileName().isEmpty() || !file.open(QIODevice::ReadOnly))
-//    {
-//        delLilXML(xmlParser);
-//        return false;
-//    }
+    QVariant const ekosStatus = m_EkosInterface->property("ekosStatus");
 
-//    while (file.getChar(&c))
-//    {
-//        root = readXMLEle(xmlParser, c, errmsg);
+    if (!ekosStatus.isValid())
+    {
+        if (m_EkosInterfaceCounter++ > 12)
+        {
+            qWarning() << "Failed to hook to Ekos DBus interface. Cannot remote control logging.";
+            return;
+        }
 
-//        if (root)
-//        {
-//            // Get host name
-//            ap = findXMLAtt(root, "name");
-//            if (!ap)
-//            {
-//                delLilXML(xmlParser);
-//                return false;
-//            }
+        // Try in 5 secs
+        QTimer::singleShot(5000, this, &DebuggerView::connectEkosDBus);
+        return;
+    }
+    else
+        setEkosLogsEnabled(true);
+}
 
-//            hName = QString(valuXMLAtt(ap));
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
+void DebuggerView::setEkosLogsEnabled(bool enabled)
+{
+    QStringList loggers;
+    loggers << "FILE" << "VERBOSE" << "INDI" << "FITS" << "CAPTURE" << "FOCUS" << "GUIDE" << "MOUNT"
+            << "SCHEDULER" << "OBSERVATORY";
 
-//            // Get host name
-//            ap = findXMLAtt(root, "hostname");
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled", QVariantList () << "FILE" << enabled);
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled", QVariantList () << "VERBOSE" << enabled);
 
-//            if (!ap)
-//            {
-//                delLilXML(xmlParser);
-//                return false;
-//            }
+    bool indiRequired = false;
+    for (auto &oneButton : ui->modulesButtonGroup->buttons())
+        indiRequired |= oneButton->text() != "FITS" && oneButton->isChecked();
 
-//            hHost = QString(valuXMLAtt(ap));
+    const bool enableINDI = enabled && indiRequired;
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled", QVariantList () << "INDI" << enableINDI);
 
-//            ap = findXMLAtt(root, "port");
+    const bool enableFITS = enabled && ui->FITSCheck->isChecked();
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled", QVariantList () << "FITS" << enableFITS);
 
-//            if (!ap)
-//            {
-//                delLilXML(xmlParser);
-//                return false;
-//            }
+    const bool enableCapture = enabled && ui->captureCheck->isChecked();
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled",
+                                          QVariantList () << "CAPTURE" << enableCapture);
 
-//            hPort = QString(valuXMLAtt(ap));
+    const bool enableFocus = enabled && ui->focusCheck->isChecked();
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled",
+                                          QVariantList () << "FOCUS" << enableFocus);
 
-//            DriverInfo *dv = new DriverInfo(hName);
-//            dv->setHostParameters(hHost, hPort);
-//            dv->setDriverSource(HOST_SOURCE);
+    const bool enableGuide = enabled && ui->guideCheck->isChecked();
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled",
+                                          QVariantList () << "GUIDE" << enableGuide);
 
-//            connect(dv, SIGNAL(deviceStateChanged(DriverInfo*)), this, SLOT(processDeviceStatus(DriverInfo*)));
+    const bool enableMount = enabled && ui->mountCheck->isChecked();
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled",
+                                          QVariantList () << "MOUNT" << enableMount);
 
-//            driversList.append(dv);
+    const bool enableScheduler = enabled && ui->schedulerCheck->isChecked();
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled",
+                                          QVariantList () << "SCHEDULER" << enableScheduler);
 
-//            //            QTreeWidgetItem *item = new QTreeWidgetItem(ui->clientTreeWidget, lastGroup);
-//            //            lastGroup             = item;
-//            //            item->setIcon(HOST_STATUS_COLUMN, ui->disconnected);
-//            //            item->setText(HOST_NAME_COLUMN, hName);
-//            //            item->setText(HOST_PORT_COLUMN, hPort);
+    const bool enableAlign = enabled && ui->alignCheck->isChecked();
+    m_EkosInterface->callWithArgumentList(QDBus::AutoDetect, "setEkosLoggingEnabled",
+                                          QVariantList () << "ALIGNMENT" << enableAlign);
 
-//            delXMLEle(root);
-//        }
-//        else if (errmsg[0])
-//        {
-//            qDebug() << errmsg;
-//            delLilXML(xmlParser);
-//            return false;
-//        }
-//    }
 
-//    delLilXML(xmlParser);
 
-//    return true;
-//}
+}

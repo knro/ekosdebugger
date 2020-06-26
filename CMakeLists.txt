@@ -11,7 +11,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 COMPONENTS Widgets Sql Xml REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Sql Xml DBus REQUIRED)
 
 set(SOURCES
     main.cpp
@@ -30,6 +30,7 @@ target_link_libraries(ekosdebugger PRIVATE
     Qt5::Widgets
     Qt5::Sql
     Qt5::Xml
+    Qt5::DBus
     )
 
 install(TARGETS ekosdebugger RUNTIME DESTINATION bin )

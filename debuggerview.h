@@ -32,6 +32,7 @@
 #include <QSettings>
 #include <QFileSystemWatcher>
 #include <QMessageBox>
+#include <QtDBus/QDBusInterface>
 
 #include "handler.h"
 #include "xmldriverslistreader.h"
@@ -88,22 +89,25 @@ class DebuggerView : public QMainWindow
         QString INDItimestamp = "";
 
     private slots:
+        // KStars
         void processKStarsOutput();
-        //        void processKStarsError();
         void copyKStarsDebugLog();
-        //        void copyKStarsAppLog();
+        void saveKStarsLogs();
+        void connectEkosDBus();
+        void clearKStarsDebugLog();
+
+        // INDI
         void processINDIOutput();
         void processINDIError();
         void copyINDIDebugLog();
         void copyINDIAppLog();
         void createINDIArgs();
-        void saveKStarsLogs();
-        void saveINDILogs();
-        void findLogFile(const QString &str);
-        void clearKStarsDebugLog();
         void clearINDIDebugLog();
         void clearINDIAppLog();
+        void saveINDILogs();
 
+        // Misc
+        void findLogFile(const QString &str);
 
     private:
         QPointer<QProcess> m_KStarsProcess;
@@ -118,6 +122,7 @@ class DebuggerView : public QMainWindow
         void loadProfiles();
         void loadDriverCombo();
         void loadDrivers();
+        void setEkosLogsEnabled(bool enabled);
 
         QStringList driversStringList;
         ProfileInfo *pi { nullptr };
@@ -126,6 +131,10 @@ class DebuggerView : public QMainWindow
         void clearAllRequests();
 
         QStandardItemModel *m_MountModel { nullptr };
+
+        // Count attempts for Ekos DBus interface
+        uint8_t m_EkosInterfaceCounter {0};
+        QPointer<QDBusInterface> m_EkosInterface;
 
 };
 
