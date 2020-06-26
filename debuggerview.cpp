@@ -1,3 +1,21 @@
+/*******************************************************************************
+  Copyright(c) 2020 Ikarus Technologies. All rights reserved.
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License version 2 as published by the Free Software Foundation.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+
+ You should have received a copy of the GNU Library General Public License
+ along with this library; see the file COPYING.LIB.  If not, write to
+ the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+*******************************************************************************/
+
 #include "debuggerview.h"
 #include "./ui_debuggerview.h"
 
@@ -263,7 +281,7 @@ void DebuggerView::loadProfiles()
 
     for (auto &pi : profiles)
     {
-        qDebug() << pi->name;
+        //qDebug() << pi->name;
         ui->profileCombo->addItem(pi->name);
     }
 }
@@ -366,7 +384,7 @@ void DebuggerView::readXMLDriverList(const QString &driversFile)
     QFile file(driversFile);
     if(!file.open(QFile::ReadOnly | QFile::Text))
     {
-        qDebug() << "Cannot read file" << file.errorString();
+        qCritical() << "Cannot read file" << file.errorString();
         return;
     }
 
@@ -375,7 +393,7 @@ void DebuggerView::readXMLDriverList(const QString &driversFile)
     //    xmlReader.read(&file);
 
     if (!xmlReader.read(&file))
-        qDebug() << "Parse error in file " << xmlReader.errorString();
+        qWarning() << "Parse error in file " << xmlReader.errorString();
     else
         driverslist->print();
 }
@@ -411,7 +429,7 @@ void DebuggerView::saveKStarsLogs()
     QDir().mkdir(folderpath + "/kstars_logs_" + timestamp);
     QString filepath;
     filepath = folderpath + "/kstars_logs_" + timestamp;
-    qDebug() << filepath;
+    //qDebug() << filepath;
     if(!filepath.isEmpty() && !filepath.isNull())
     {
         settings.setValue("kstars/savePath", folderpath);

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>DebuggerView</string>
+   <string>Ekos Debugger</string>
   </property>
   <property name="windowIcon">
    <iconset resource="resources/resources.qrc">
@@ -28,7 +28,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="KStarsTab">
        <attribute name="title">
@@ -178,6 +178,9 @@
               <height>32</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>Save logs</string>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -231,11 +234,15 @@
               <height>32</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>Clear debug log</string>
+            </property>
             <property name="text">
              <string/>
             </property>
             <property name="icon">
-             <iconset theme="edit-clear-all"/>
+             <iconset theme="edit-clear-all">
+              <normaloff>.</normaloff>.</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -356,6 +363,9 @@
           </item>
           <item>
            <widget class="QCheckBox" name="restartINDICB">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Restart on Crash</string>
             </property>
@@ -387,6 +397,9 @@
               <width>32</width>
               <height>32</height>
              </size>
+            </property>
+            <property name="toolTip">
+             <string>Save logs</string>
             </property>
             <property name="text">
              <string/>
@@ -441,11 +454,15 @@
               <height>32</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>Clear debug log</string>
+            </property>
             <property name="text">
              <string/>
             </property>
             <property name="icon">
-             <iconset theme="edit-clear-all"/>
+             <iconset theme="edit-clear-all">
+              <normaloff>.</normaloff>.</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -522,11 +539,15 @@
               <height>32</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>Clear application log</string>
+            </property>
             <property name="text">
              <string/>
             </property>
             <property name="icon">
-             <iconset theme="edit-clear-all"/>
+             <iconset theme="edit-clear-all">
+              <normaloff>.</normaloff>.</iconset>
             </property>
             <property name="iconSize">
              <size>
