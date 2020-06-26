@@ -3,6 +3,7 @@ Section: kde
 Priority: optional
 Maintainer: Jasem Mutlaq <mutlaqja@ikarustech.com>
 Build-Depends: cmake,
+               cdbs,
                debhelper (>= 9.0.0),
                qtbase5-dev,
                libqt5sql5-sqlite,
