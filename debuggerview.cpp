@@ -140,7 +140,13 @@ void DebuggerView::startKStars()
 {
     m_KStarsProcess = new QProcess();
     QStringList args;
-    args << "-batch" << "-ex" << "run" << "-ex" << "bt" << "kstars";
+
+    args << "-batch"
+         << "-ex" << "handle SIG32 nostop"
+         << "-ex" << "run"
+         << "-ex" << "bt"
+         << "kstars";
+
     ui->startKStarsB->setEnabled(false);
     ui->stopKStarsB->setEnabled(true);
     for (auto &oneButton : ui->modulesButtonGroup->buttons())
@@ -221,9 +227,13 @@ void DebuggerView::startINDI()
     INDItimestamp = QDateTime::currentDateTime().toString("yy-MM-ddThh-mm-ss");
     m_INDIProcess = new QProcess();
     QStringList args;
-    args << "-batch" << "-ex" << "set follow-fork-mode child" << "-ex" << "run" << "-ex" << "bt" << "--args"
-         << "indiserver" << "-r" << "0" << "-v" << INDIArgs;
-    //    gdb -batch -ex "set follow-fork-mode child" -ex "run" -ex "bt" --args indiserver -r -0 -v
+    args << "-batch"
+         << "-ex" << "handle SIG32 nostop"
+         << "-ex" << "set follow-fork-mode child"
+         << "-ex" << "run"
+         << "-ex" << "bt"
+         << "--args" << "indiserver" << "-r" << "0" << "-v" << INDIArgs;
+
     ui->startINDIB->setDisabled(true);
     ui->stopINDIB->setDisabled(false);
     ui->profileCombo->setDisabled(true);

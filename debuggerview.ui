@@ -176,6 +176,9 @@
             </item>
             <item row="0" column="0">
              <widget class="QCheckBox" name="captureCheck">
+              <property name="toolTip">
+               <string>Cameras, sequences, previews, and video streaming.</string>
+              </property>
               <property name="text">
                <string>Capture</string>
               </property>
