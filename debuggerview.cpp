@@ -165,13 +165,36 @@ void DebuggerView::startKStars()
             [ = ](int exitCode, QProcess::ExitStatus exitStatus)
     {
         Q_UNUSED(exitCode);
+        Q_UNUSED(exitStatus);
         if (ui->stopKStarsB->isEnabled())
         {
             ui->startKStarsB->setEnabled(true);
             ui->stopKStarsB->setEnabled(false);
             for (auto &oneButton : ui->modulesButtonGroup->buttons())
                 oneButton->setEnabled(true);
-            if(exitStatus == QProcess::CrashExit)
+            // Alternative way that sucks and is not accurate
+            // since many received signal can be shown in the log due to the log
+            // not being cleared after every start of KStars
+//            QString temp = ui->KStarsDebugLog->toPlainText();
+//            bool crashed = false;
+//            bool crashed = temp.contains("\"kstars\" received signal");
+
+            // Sets the cursor to the end of KStarsDebugLog QTextBrowser and selects only
+            // the last line, so it extracts [Inferior 1 (process 6753) exited normally]
+            // and then checks if it contains "exited normally]"
+            // if it contains it, then the program didn't crash, else, it crashed.
+            ui->KStarsDebugLog->moveCursor( QTextCursor::End );
+            ui->KStarsDebugLog->moveCursor( QTextCursor::StartOfLine, QTextCursor::KeepAnchor );
+            QString text = ui->KStarsDebugLog->textCursor().selectedText();
+            // deselection
+            QTextCursor cursor = ui->KStarsDebugLog->textCursor();
+            cursor.movePosition( QTextCursor::End );
+            ui->KStarsDebugLog->setTextCursor( cursor );
+
+            bool normally = text.contains("exited normally]");
+
+
+            if(!normally)
             {
                 ui->statusbar->showMessage("KStars crashed.");
                 if(ui->restartKStarsCB->isChecked())
@@ -233,7 +256,6 @@ void DebuggerView::startINDI()
          << "-ex" << "run"
          << "-ex" << "bt"
          << "--args" << "indiserver" << "-r" << "0" << "-v" << INDIArgs;
-
     ui->startINDIB->setDisabled(true);
     ui->stopINDIB->setDisabled(false);
     ui->profileCombo->setDisabled(true);
@@ -246,13 +268,37 @@ void DebuggerView::startINDI()
             [ = ](int exitCode, QProcess::ExitStatus exitStatus)
     {
         Q_UNUSED(exitCode);
+        Q_UNUSED(exitStatus);
         if (ui->stopINDIB->isEnabled())
         {
             ui->startINDIB->setDisabled(false);
             ui->stopINDIB->setDisabled(true);
             ui->profileCombo->setDisabled(false);
             ui->driverCombo->setDisabled(false);
-            if(exitStatus == QProcess::CrashExit)
+
+            // killing zombie processes
+            QPointer<QProcess> m_quitINDIProcess = new QProcess();
+            QStringList args;
+            args << "indiserver";
+            m_quitINDIProcess->start("pkill", args);
+            m_quitINDIProcess->waitForFinished();
+            m_quitINDIProcess->close();
+
+            // Sets the cursor to the end of INDIDebugLog QTextBrowser and selects only
+            // the last line, so it extracts #12 0x000055555555bcee in _start ()
+            // and then checks if it contains "#" at index 0
+            // if it contains it, then the program crashed, else, it exited normally.
+            ui->INDIDebugLog->moveCursor( QTextCursor::End );
+            ui->INDIDebugLog->moveCursor( QTextCursor::StartOfLine, QTextCursor::KeepAnchor );
+            QString text = ui->INDIDebugLog->textCursor().selectedText();
+            // deselection
+            QTextCursor cursor = ui->INDIDebugLog->textCursor();
+            cursor.movePosition( QTextCursor::End );
+            ui->INDIDebugLog->setTextCursor( cursor );
+
+            bool crashed = text[0] == "#";
+
+            if(crashed)
             {
                 ui->statusbar->showMessage("INDI crashed.");
                 if(ui->restartINDICB->isChecked())
@@ -263,6 +309,14 @@ void DebuggerView::startINDI()
         }
     });
 
+    // killing zombie processes
+    QPointer<QProcess> m_quitINDIProcess = new QProcess();
+    QStringList args2;
+    args << "indiserver";
+    m_quitINDIProcess->start("pkill", args2);
+    m_quitINDIProcess->waitForFinished();
+    m_quitINDIProcess->close();
+
     m_INDIProcess->start("gdb", args);
 }
 
@@ -272,6 +326,15 @@ void DebuggerView::startINDI()
 void DebuggerView::stopINDI()
 {
     m_INDIProcess->terminate();
+
+    // killing zombie processes
+    QPointer<QProcess> m_quitINDIProcess = new QProcess();
+    QStringList args;
+    args << "indiserver";
+    m_quitINDIProcess->start("pkill", args);
+    m_quitINDIProcess->waitForFinished();
+    m_quitINDIProcess->close();
+
     ui->startINDIB->setDisabled(false);
     ui->stopINDIB->setDisabled(true);
     ui->profileCombo->setDisabled(false);
