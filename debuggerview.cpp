@@ -296,7 +296,7 @@ void DebuggerView::startINDI()
             cursor.movePosition( QTextCursor::End );
             ui->INDIDebugLog->setTextCursor( cursor );
 
-            bool crashed = text[0] == "#";
+            bool crashed = text[0] == "#" || text.contains("Backtrace");
 
             if(crashed)
             {
