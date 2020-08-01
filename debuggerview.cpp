@@ -65,7 +65,10 @@ DebuggerView::DebuggerView(QWidget *parent)
     });
 
     QString kstarsExe = settings.value("kstars/exe", "/usr/bin/kstars").toString();
-    ui->kstarsExeField->setText(kstarsExe);
+    ui->KStarsExeField->setText(kstarsExe);
+
+    QString indiExe = settings.value("indi/exe", "/usr/bin/indiserver").toString();
+    ui->INDIExeField->setText(indiExe);
 
     connect(ui->startKStarsB, &QPushButton::clicked, this, &DebuggerView::startKStars);
     connect(ui->stopKStarsB, &QPushButton::clicked, this, &DebuggerView::stopKStars);
@@ -83,7 +86,8 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(ui->clearKStarsDebugLogB, &QPushButton::clicked, this, &DebuggerView::clearKStarsDebugLog);
     connect(ui->clearINDIDebugLogB, &QPushButton::clicked, this, &DebuggerView::clearINDIDebugLog);
     connect(ui->clearINDIAppLogB, &QPushButton::clicked, this, &DebuggerView::clearINDIAppLog);
-    connect(ui->restoreDefaultKStarsExeB, &QPushButton::clicked, this, &DebuggerView::restoreDefaultKstarsExe);
+    connect(ui->restoreDefaultKStarsExeB, &QPushButton::clicked, this, &DebuggerView::restoreDefaultKStarsExe);
+    connect(ui->restoreDefaultINDIExeB, &QPushButton::clicked, this, &DebuggerView::restoreDefaultINDIExe);
 
     readXMLDrivers();
     loadProfiles();
@@ -104,11 +108,21 @@ DebuggerView::~DebuggerView()
 /////////////////////////////////////////////////////////////////////////////////////
 ///
 ////////////////////////////////////////////////////////////////////////////////////
-void DebuggerView::restoreDefaultKstarsExe()
+void DebuggerView::restoreDefaultINDIExe()
 {
     QSettings settings;
-    ui->kstarsExeField->setText("/usr/bin/kstars");
-    settings.setValue("kstars/exe", ui->kstarsExeField->text());
+    ui->INDIExeField->setText("/usr/bin/indiserver");
+    settings.setValue("indi/exe", ui->INDIExeField->text());
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
+void DebuggerView::restoreDefaultKStarsExe()
+{
+    QSettings settings;
+    ui->KStarsExeField->setText("/usr/bin/kstars");
+    settings.setValue("kstars/exe", ui->KStarsExeField->text());
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -155,13 +169,19 @@ void DebuggerView::startKStars()
     m_KStarsProcess = new QProcess();
     QStringList args;
     QSettings settings;
-    settings.setValue("kstars/exe", ui->kstarsExeField->text());
+    settings.setValue("kstars/exe", ui->KStarsExeField->text());
+
+    if (!QFile::exists(ui->KStarsExeField->text())){
+        QMessageBox messageBox;
+        messageBox.critical(0,"Error","KStars was not found in the path specified!");
+        return;
+    }
 
     args << "-batch"
          << "-ex" << "handle SIG32 nostop"
          << "-ex" << "run"
          << "-ex" << "bt"
-         << ui->kstarsExeField->text();
+         << ui->KStarsExeField->text();
 
     ui->startKStarsB->setEnabled(false);
     ui->stopKStarsB->setEnabled(true);
@@ -265,13 +285,22 @@ void DebuggerView::startINDI()
 {
     INDItimestamp = QDateTime::currentDateTime().toString("yy-MM-ddThh-mm-ss");
     m_INDIProcess = new QProcess();
+    QSettings settings;
+    settings.setValue("indi/exe", ui->INDIExeField->text());
+
+    if (!QFile::exists(ui->INDIExeField->text())){
+        QMessageBox messageBox;
+        messageBox.critical(0,"Error","INDI server was not found in the path specified!");
+        return;
+    }
+
     QStringList args;
     args << "-batch"
          << "-ex" << "handle SIG32 nostop"
          << "-ex" << "set follow-fork-mode child"
          << "-ex" << "run"
          << "-ex" << "bt"
-         << "--args" << "indiserver" << "-r" << "0" << "-v" << INDIArgs;
+         << "--args" << ui->INDIExeField->text() << "-r" << "0" << "-v" << INDIArgs;
     ui->startINDIB->setDisabled(true);
     ui->stopINDIB->setDisabled(false);
     ui->profileCombo->setDisabled(true);

@@ -95,7 +95,8 @@ class DebuggerView : public QMainWindow
         void saveKStarsLogs();
         void connectEkosDBus();
         void clearKStarsDebugLog();
-        void restoreDefaultKstarsExe();
+        void restoreDefaultKStarsExe();
+        void restoreDefaultINDIExe();
 
         // INDI
         void processINDIOutput();
