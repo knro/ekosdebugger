@@ -64,6 +64,9 @@ DebuggerView::DebuggerView(QWidget *parent)
         settings.setValue("kstars/restart", checked);
     });
 
+    QString kstarsExe = settings.value("kstars/exe", "/usr/bin/kstars").toString();
+    ui->kstarsExeField->setText(kstarsExe);
+
     connect(ui->startKStarsB, &QPushButton::clicked, this, &DebuggerView::startKStars);
     connect(ui->stopKStarsB, &QPushButton::clicked, this, &DebuggerView::stopKStars);
     connect(ui->copyKStarsDebugLogB, &QPushButton::clicked, this, &DebuggerView::copyKStarsDebugLog);
@@ -80,6 +83,7 @@ DebuggerView::DebuggerView(QWidget *parent)
     connect(ui->clearKStarsDebugLogB, &QPushButton::clicked, this, &DebuggerView::clearKStarsDebugLog);
     connect(ui->clearINDIDebugLogB, &QPushButton::clicked, this, &DebuggerView::clearINDIDebugLog);
     connect(ui->clearINDIAppLogB, &QPushButton::clicked, this, &DebuggerView::clearINDIAppLog);
+    connect(ui->restoreDefaultKStarsExeB, &QPushButton::clicked, this, &DebuggerView::restoreDefaultKstarsExe);
 
     readXMLDrivers();
     loadProfiles();
@@ -95,6 +99,16 @@ DebuggerView::~DebuggerView()
     if(m_INDIProcess != nullptr)
         stopINDI();
     delete ui;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+///
+////////////////////////////////////////////////////////////////////////////////////
+void DebuggerView::restoreDefaultKstarsExe()
+{
+    QSettings settings;
+    ui->kstarsExeField->setText("/usr/bin/kstars");
+    settings.setValue("kstars/exe", ui->kstarsExeField->text());
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -140,12 +154,14 @@ void DebuggerView::startKStars()
 {
     m_KStarsProcess = new QProcess();
     QStringList args;
+    QSettings settings;
+    settings.setValue("kstars/exe", ui->kstarsExeField->text());
 
     args << "-batch"
          << "-ex" << "handle SIG32 nostop"
          << "-ex" << "run"
          << "-ex" << "bt"
-         << "kstars";
+         << ui->kstarsExeField->text();
 
     ui->startKStarsB->setEnabled(false);
     ui->stopKStarsB->setEnabled(true);
