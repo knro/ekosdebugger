@@ -1,3 +1,5 @@
+%define __cmake_in_source_build %{_vpath_builddir}
+
 Name: ekosdebugger
 Version: 0.0.1.git
 Release: %(date -u +%%Y%%m%%d%%H%%M%%S)%{?dist}
@@ -14,11 +16,11 @@ BuildRequires: gcc-c++
 BuildRequires: systemd
 BuildRequires: boost-devel
 BuildRequires: boost-regex
-BuildRequires: qt5-devel
 
 
 BuildRequires: pkgconfig(libcurl)
 BuildRequires: pkgconfig(zlib)
+BuildRequires: pkgconfig(Qt5)
 
 %description
 Ekos Debugger is a helper application to KStars, Ekos, and INDI debugging. It can be used to troubleshoot KStars, INDI, or both.
