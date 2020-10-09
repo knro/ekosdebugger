@@ -26,16 +26,15 @@ BuildRequires: pkgconfig(Qt5)
 Ekos Debugger is a helper application to KStars, Ekos, and INDI debugging. It can be used to troubleshoot KStars, INDI, or both.
 The generated log files can be shared with developers in order to investigate any issues with the software and help to improve it.
 
-%prep
-%setup -n ekosdebugger-master
+%prep -v
+%setup
 
 %build
-
 %cmake .
-make %{?_smp_mflags} -j4
+%make_build
 
 %install
-make DESTDIR=%{buildroot} install
+%cmake_install
 
 %files
 %license COPYING
