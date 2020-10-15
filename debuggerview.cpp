@@ -171,9 +171,10 @@ void DebuggerView::startKStars()
     QSettings settings;
     settings.setValue("kstars/exe", ui->KStarsExeField->text());
 
-    if (!QFile::exists(ui->KStarsExeField->text())){
+    if (!QFile::exists(ui->KStarsExeField->text()))
+    {
         QMessageBox messageBox;
-        messageBox.critical(0,"Error","KStars was not found in the path specified!");
+        messageBox.critical(0, "Error", "KStars was not found in the path specified!");
         return;
     }
 
@@ -211,9 +212,9 @@ void DebuggerView::startKStars()
             // Alternative way that sucks and is not accurate
             // since many received signal can be shown in the log due to the log
             // not being cleared after every start of KStars
-//            QString temp = ui->KStarsDebugLog->toPlainText();
-//            bool crashed = false;
-//            bool crashed = temp.contains("\"kstars\" received signal");
+            //            QString temp = ui->KStarsDebugLog->toPlainText();
+            //            bool crashed = false;
+            //            bool crashed = temp.contains("\"kstars\" received signal");
 
             // Sets the cursor to the end of KStarsDebugLog QTextBrowser and selects only
             // the last line, so it extracts [Inferior 1 (process 6753) exited normally]
@@ -288,9 +289,10 @@ void DebuggerView::startINDI()
     QSettings settings;
     settings.setValue("indi/exe", ui->INDIExeField->text());
 
-    if (!QFile::exists(ui->INDIExeField->text())){
+    if (!QFile::exists(ui->INDIExeField->text()))
+    {
         QMessageBox messageBox;
-        messageBox.critical(0,"Error","INDI server was not found in the path specified!");
+        messageBox.critical(0, "Error", "INDI server was not found in the path specified!");
         return;
     }
 
@@ -323,9 +325,7 @@ void DebuggerView::startINDI()
 
             // killing zombie processes
             QPointer<QProcess> m_quitINDIProcess = new QProcess();
-            QStringList args;
-            args << "indiserver";
-            m_quitINDIProcess->start("pkill", args);
+            m_quitINDIProcess->start("pkill", QStringList() << "indiserver");
             m_quitINDIProcess->waitForFinished();
             m_quitINDIProcess->close();
 
@@ -356,9 +356,7 @@ void DebuggerView::startINDI()
 
     // killing zombie processes
     QPointer<QProcess> m_quitINDIProcess = new QProcess();
-    QStringList args2;
-    args << "indiserver";
-    m_quitINDIProcess->start("pkill", args2);
+    m_quitINDIProcess->start("pkill", QStringList() << "indiserver");
     m_quitINDIProcess->waitForFinished();
     m_quitINDIProcess->close();
 
