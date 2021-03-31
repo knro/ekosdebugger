@@ -299,7 +299,8 @@ void DebuggerView::startINDI()
 
     QStringList args;
     args << "-batch"
-         << "-ex" << "handle SIG32 nostop"
+         << "-ex" << "handle SIG32 nostop noprint"
+         << "-ex" << "handle SIG33 nostop noprint"
          << "-ex" << "set follow-fork-mode child"
          << "-ex" << "run"
          << "-ex" << "bt"
