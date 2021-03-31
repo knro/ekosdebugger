@@ -179,7 +179,8 @@ void DebuggerView::startKStars()
     }
 
     args << "-batch"
-         << "-ex" << "handle SIG32 nostop"
+         << "-ex" << "handle SIG32 nostop noprint"
+         << "-ex" << "handle SIG33 nostop noprint"
          << "-ex" << "run"
          << "-ex" << "bt"
          << ui->KStarsExeField->text();
