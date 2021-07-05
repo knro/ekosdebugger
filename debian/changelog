@@ -1,3 +1,9 @@
+ekos-debugger (1.1) bionic; urgency=medium
+
+  * Minor fixes.
+
+ -- Jasem Mutlaq <mutlaqja@ikarustech.com>  Tue, 6 Jul 2021 00:30:00 +0300
+
 ekos-debugger (1.0) bionic; urgency=medium
 
   * Initial release.
