@@ -776,6 +776,7 @@ void DebuggerView::findLogFile(const QString &str)
 ////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::connectEkosDBus()
 {
+    delete (m_EkosInterface);
     m_EkosInterface = new QDBusInterface("org.kde.kstars",
                                          "/KStars/Ekos",
                                          "org.kde.kstars.Ekos",
