@@ -130,11 +130,7 @@ void DebuggerView::restoreDefaultKStarsExe()
 ////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::clearKStarsDebugLog()
 {
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(this, "Clear KStars Debug Log", "Are you sure you want to clear the debug log?",
-                                  QMessageBox::Yes | QMessageBox::No);
-    if (reply == QMessageBox::Yes)
-        ui->KStarsDebugLog->clear();
+    ui->KStarsDebugLog->clear();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -142,11 +138,7 @@ void DebuggerView::clearKStarsDebugLog()
 ////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::clearINDIDebugLog()
 {
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(this, "Clear INDI Debug Log", "Are you sure you want to clear the debug log?",
-                                  QMessageBox::Yes | QMessageBox::No);
-    if (reply == QMessageBox::Yes)
-        ui->INDIDebugLog->clear();
+    ui->INDIDebugLog->clear();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -154,11 +146,7 @@ void DebuggerView::clearINDIDebugLog()
 ////////////////////////////////////////////////////////////////////////////////////
 void DebuggerView::clearINDIAppLog()
 {
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(this, "Clear INDI App Log", "Are you sure you want to clear the app log?",
-                                  QMessageBox::Yes | QMessageBox::No);
-    if (reply == QMessageBox::Yes)
-        ui->INDIAppLog->clear();
+    ui->INDIAppLog->clear();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -585,7 +573,7 @@ void DebuggerView::saveKStarsLogs()
         QStringList pieces = KStarsLogFilePath.split( "/" );
         KStarsLogFolderName = pieces.value( pieces.length() - 2 );
         KStarsLogFileName = pieces.value( pieces.length() - 1 );
-        QRegExp separator("[(_|.)]");
+        QRegularExpression separator("[(_|.)]");
         QStringList parts = KStarsLogFileName.split(separator);
         timestamp = KStarsLogFolderName + "T" + parts[1];
     }
@@ -614,7 +602,7 @@ void DebuggerView::saveKStarsLogs()
         if ( debugfile.open(QIODevice::ReadWrite) )
         {
             QTextStream stream( &debugfile );
-            stream << debugLog << endl;
+            stream << debugLog;
         }
         debugfile.close();
 
@@ -715,7 +703,7 @@ void DebuggerView::saveINDILogs()
         if ( debugfile.open(QIODevice::ReadWrite) )
         {
             QTextStream stream( &debugfile );
-            stream << debugLog << endl;
+            stream << debugLog;
         }
         debugfile.close();
 
@@ -724,7 +712,7 @@ void DebuggerView::saveINDILogs()
         if ( appfile.open(QIODevice::ReadWrite) )
         {
             QTextStream stream( &appfile );
-            stream << appLog << endl;
+            stream << appLog;
         }
         appfile.close();
 

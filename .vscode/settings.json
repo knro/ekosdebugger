@@ -1,0 +1,5 @@
+{
+  "cmake.configureSettings": {
+    "BUILD_WITH_QT6": "BOOL:OFF"
+  }
+}
