@@ -1,8 +1,6 @@
-%define __cmake_in_source_build %{_vpath_builddir}
-
 Name: ekosdebugger
 Version: 1.1.0.git
-Release: %(date -u +%%Y%%m%%d%%H%%M%%S)%{?dist}
+Release: %(T=%{_topdir}; mkdir -p $T 2>/dev/null; [ -f $T/.release-stamp-%{name} ] || date -u +%%Y%%m%%d%%H%%M%%S > $T/.release-stamp-%{name} 2>/dev/null; cat $T/.release-stamp-%{name} 2>/dev/null || date -u +%%Y%%m%%d%%H%%M%%S)%{?dist}
 Summary: Ekos Debugger
 
 License: LGPLv2
@@ -12,6 +10,7 @@ URL: https://indilib.org
 Source0: https://github.com/knro/ekosdebugger/archive/master.tar.gz
 
 BuildRequires: cmake
+BuildRequires: gcc
 BuildRequires: gcc-c++
 BuildRequires: systemd
 BuildRequires: boost-devel
@@ -29,12 +28,11 @@ The generated log files can be shared with developers in order to investigate an
 %setup -n ekosdebugger-master
 
 %build
-
-%cmake .
-make %{?_smp_mflags} -j4
+%cmake
+%cmake_build
 
 %install
-make DESTDIR=%{buildroot} install
+%cmake_install
 
 %files
 %license COPYING
